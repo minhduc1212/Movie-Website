@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HLS Video with Embedded Subtitles</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+    <h1>HLS Video with Embedded Subtitles</h1>
+    <video id="video" controls autoplay width="600">
+        <track kind="subtitles" label="Vietnamese" src="{{ url_for('static', filename='Dark EP 1/VI.vtt') }}" srclang="vi" default>
+    </video>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.getElementById('video');
+            const videoSrc = "{{ url_for('static', filename='Dark EP 1/video.m3u8') }}";
+
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(videoSrc);
+                hls.attachMedia(video);
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = videoSrc;
+            } else {
+                alert('Trình duyệt của bạn không hỗ trợ HLS.');
+            }
+        });
+    </script>
+</body>
+</html>
