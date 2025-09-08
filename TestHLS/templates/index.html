@@ -5,10 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HLS Video with Embedded Subtitles</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        video {
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+            display: block;
+        }
+
+        track {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <h1>HLS Video with Embedded Subtitles</h1>
-    <video id="video" controls autoplay width="600">
+    <video id="video" controls autoplay>
         <track kind="subtitles" label="Vietnamese" src="{{ url_for('static', filename='Dark EP 1/VI.vtt') }}" srclang="vi" default>
     </video>
 
