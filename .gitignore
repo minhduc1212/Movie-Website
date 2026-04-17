@@ -1,3 +1,5 @@
 TestHLS/static
 /static
 /Movie website
+.venv
+/movie_website.egg-info

@@ -1,0 +1,17 @@
+[project]
+name = "movie-website"
+version = "0.1.0"
+description = "movie-website"
+dependencies = [
+    "django",
+    "psycopg2-binary",
+    "waitress",
+    "requests",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["database", "TestHLS"]

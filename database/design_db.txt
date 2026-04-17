@@ -1,0 +1,9 @@
+Movie name
+Genre
+Director
+Release_year
+IMDB_Rating
+Description
+cast
+Path
+    
