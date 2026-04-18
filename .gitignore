@@ -1,3 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/
+
+# Video & Subtitles (Prevent pushing large media to Git)
+*.mp4
+*.mkv
+*.avi
+*.ts
+*.m3u8
+
+# Build & Packaging
+build/
+dist/
+*.egg-info/
+*.egg
 TestHLS/static
 /static
 /Movie website
