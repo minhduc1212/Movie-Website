@@ -5,5 +5,12 @@ Release_year
 IMDB_Rating
 Description
 cast
-Path
+Path of m3u8
+path of poster image
+path of sub
+path of trailer
+path of movie file
+Film Format
+status  
+Medium of film
     
