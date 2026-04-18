@@ -1,5 +1,8 @@
-This is your new *vault*.
+#running code
+python manage.py makemigrations: Blueprint
+python manage.py migrate: Execution
+python manage.py runserver: Runserver
 
-Make a note of something, [[create a link]], or try [the Importer](https://help.obsidian.md/Plugins/Importer)!
-
-When you're ready, delete this note and make the vault your own.
+python manage.py startapp movies: Create app
+django-admin startproject core .: create core
+python manage.py createsuperuse: create admin
