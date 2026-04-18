@@ -1,4 +1,4 @@
-#running code
+# Running code
 python manage.py makemigrations: Blueprint
 python manage.py migrate: Execution
 python manage.py runserver: Runserver
