@@ -1,0 +1,38 @@
+OPhim
+KKPhim
+NguonC
+PhimAPI
+
+TMDb (The Movie Database) / OMDb API
+Vidsrc (vidsrc.me / vidsrc.to)
+SuperEmbed / 2Embed / SmashyStream
+AutoEmbed (autoembed.to / autoembed.cc) & MultiEmbed
+VidLink
+
+YTS (YIFY) API
+
+Jikan API / AniList API (Metadata)
+
+FlixHQ (flixhq.to / flixhq.pe)
+SFlix (sflix.to / sflix.se)
+Braflix / Sudo-flix
+
+HiAnime
+Anicrush
+AllAnime
+
+Consumet API
+
+
+Yarrlist
+
+https://www.reddit.com/r/YouShouldKnow/comments/1hll9nb/comment/m8ndhp0/
+
+1337x
+The Pirate Bay (TPB)
+TorrentGalaxy
+NYAA
+YTS / YIFY
+Rutracker
+LimeTorrents
+https://rargb.to/
