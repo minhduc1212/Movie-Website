@@ -3,27 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kế Hoạch Xây Dựng Web Phim — Phiên Bản Tối Ưu</title>
+<title>FilmSite — Kế Hoạch Kiến Trúc & Xây Dựng Hoàn Chỉnh</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Sora:wght@300;400;500;600;700;800&display=swap');
 
   :root {
-    --bg: #0d0f14;
-    --surface: #13161e;
-    --surface2: #1a1e2a;
-    --border: #252936;
-    --accent: #5b6af0;
-    --accent2: #38bdf8;
-    --accent3: #a78bfa;
-    --warn: #f59e0b;
-    --danger: #ef4444;
-    --success: #22c55e;
-    --text: #e2e4ef;
-    --muted: #7b82a0;
-    --code-bg: #0a0c12;
+    --bg:        #090b10;
+    --surface:   #0f1218;
+    --surface2:  #161b24;
+    --surface3:  #1d2330;
+    --border:    #222736;
+    --border2:   #2d3447;
+    --accent:    #6272f0;
+    --accent-dim:rgba(98,114,240,0.12);
+    --accent2:   #38c8f0;
+    --accent3:   #a78bfa;
+    --accent4:   #34d399;
+    --warn:      #f59e0b;
+    --danger:    #f0516e;
+    --success:   #22c55e;
+    --text:      #dde1f0;
+    --text2:     #a8afc8;
+    --muted:     #636b88;
+    --code-bg:   #07090e;
+    --glow:      rgba(98,114,240,0.15);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
 
   body {
     font-family: 'Sora', sans-serif;
@@ -33,176 +41,227 @@
     font-size: 15px;
   }
 
-  /* ── HEADER ───────────────────────────────────── */
-  .hero {
-    padding: 64px 40px 48px;
-    max-width: 960px;
-    margin: 0 auto;
+  /* ── SCROLLBAR ────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── SIDEBAR NAV ──────────────────────────────────────── */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-logo {
+    padding: 0 20px 24px;
     border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .sidebar-logo .logo-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .sidebar-logo .logo-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -.02em;
+  }
+  .nav-group { padding: 0 12px; margin-bottom: 8px; }
+  .nav-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 8px 8px 4px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text2);
+    font-size: 13px;
+    transition: all .15s;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+  .nav-item .ni { font-size: 14px; opacity: .8; flex-shrink: 0; }
+  .nav-item .np {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    margin-left: auto;
+    background: rgba(98,114,240,.15);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* ── MAIN CONTENT ─────────────────────────────────────── */
+  .main {
+    margin-left: 220px;
+    min-height: 100vh;
+  }
+
+  /* ── HERO ─────────────────────────────────────────────── */
+  .hero {
+    padding: 64px 56px 52px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(98,114,240,.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
   }
   .badge {
     display: inline-block;
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    background: rgba(91,106,240,0.15);
+    font-size: 10px;
+    background: rgba(98,114,240,0.12);
     color: var(--accent);
-    border: 1px solid rgba(91,106,240,0.35);
+    border: 1px solid rgba(98,114,240,0.3);
     border-radius: 4px;
-    padding: 3px 10px;
-    letter-spacing: .08em;
-    margin-bottom: 18px;
+    padding: 3px 9px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
   }
+  .badge.green { background:rgba(34,197,94,.1); color:var(--success); border-color:rgba(34,197,94,.25); }
+  .badge.amber { background:rgba(245,158,11,.1); color:var(--warn); border-color:rgba(245,158,11,.25); }
+  .badge.purple { background:rgba(167,139,250,.1); color:var(--accent3); border-color:rgba(167,139,250,.25); }
+  .badge.teal { background:rgba(52,211,153,.1); color:var(--accent4); border-color:rgba(52,211,153,.25); }
   h1 {
-    font-size: clamp(28px, 4vw, 44px);
-    font-weight: 700;
-    letter-spacing: -.02em;
-    line-height: 1.15;
+    font-size: clamp(28px, 4vw, 46px);
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1.1;
     margin-bottom: 16px;
   }
-  h1 span { color: var(--accent); }
-  .hero p { color: var(--muted); font-size: 16px; max-width: 640px; }
+  h1 .hl { color: var(--accent); }
+  h1 .hl2 { color: var(--accent2); }
+  .hero-desc { color: var(--text2); font-size: 15px; max-width: 600px; line-height: 1.7; }
 
-  /* ── REVIEW SECTION ───────────────────────────── */
-  .review-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin: 32px 0;
-  }
-  @media (max-width: 640px) { .review-grid { grid-template-columns: 1fr; } }
+  /* ── WRAPPER ──────────────────────────────────────────── */
+  .wrapper { max-width: 860px; margin: 0 auto; padding: 0 56px 100px; }
 
-  .review-card {
-    border-radius: 10px;
-    padding: 20px 24px;
-    border: 1px solid var(--border);
-  }
-  .review-card.good { background: rgba(34,197,94,0.06); border-color: rgba(34,197,94,0.2); }
-  .review-card.bad  { background: rgba(239,68,68,0.06);  border-color: rgba(239,68,68,0.2); }
-  .review-card h3 { font-size: 13px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 12px; }
-  .review-card.good h3 { color: var(--success); }
-  .review-card.bad  h3 { color: var(--danger); }
-  .review-card ul { list-style: none; }
-  .review-card ul li { font-size: 14px; color: var(--muted); padding: 4px 0; display: flex; gap: 8px; align-items: flex-start; }
-  .review-card ul li::before { flex-shrink: 0; margin-top: 5px; width: 6px; height: 6px; border-radius: 50%; display: block; content: ''; }
-  .review-card.good ul li::before { background: var(--success); }
-  .review-card.bad  ul li::before { background: var(--danger); }
-
-  /* ── LAYOUT ───────────────────────────────────── */
-  .wrapper {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 0 40px 80px;
-  }
-
-  /* ── PHASE ────────────────────────────────────── */
-  .phase {
-    margin-top: 56px;
-  }
-  .phase-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+  /* ── SECTION ──────────────────────────────────────────── */
+  .section { margin-top: 60px; scroll-margin-top: 20px; }
+  .section-header {
+    display: flex; align-items: center; gap: 14px;
     margin-bottom: 28px;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--border);
   }
-  .phase-num {
+  .section-num {
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    font-weight: 500;
+    font-size: 10px;
+    font-weight: 600;
     background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 12px;
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    padding: 5px 10px;
     color: var(--muted);
     white-space: nowrap;
+    letter-spacing: .05em;
   }
-  .phase h2 {
-    font-size: 22px;
+  .section h2 {
+    font-size: 21px;
     font-weight: 700;
     letter-spacing: -.02em;
   }
-  .phase-week {
+  .section-week {
     margin-left: auto;
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
+    font-size: 10px;
     color: var(--accent);
     white-space: nowrap;
+    background: var(--accent-dim);
+    padding: 3px 8px;
+    border-radius: 4px;
   }
 
-  /* ── STEP ─────────────────────────────────────── */
+  /* ── STEP (accordion) ─────────────────────────────────── */
   .step {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-bottom: 16px;
+    border-radius: 10px;
+    margin-bottom: 12px;
     overflow: hidden;
+    transition: border-color .2s;
   }
+  .step:hover { border-color: var(--border2); }
+  .step.open { border-color: rgba(98,114,240,.3); }
   .step-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
-    cursor: pointer;
-    user-select: none;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px;
+    cursor: pointer; user-select: none;
   }
   .step-title:hover { background: var(--surface2); }
   .step-icon {
-    width: 28px; height: 28px;
-    border-radius: 6px;
-    background: rgba(91,106,240,0.12);
-    border: 1px solid rgba(91,106,240,0.25);
+    width: 30px; height: 30px;
+    border-radius: 7px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(98,114,240,.2);
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; flex-shrink: 0;
+    font-size: 14px; flex-shrink: 0;
   }
-  .step-name { font-weight: 600; font-size: 15px; }
+  .step-name { font-weight: 600; font-size: 14px; }
+  .step-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 6px;
+  }
   .step-toggle {
     margin-left: auto;
-    font-size: 11px;
     color: var(--muted);
-    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
     transition: transform .2s;
   }
-  .step-body {
-    padding: 0 20px 20px;
-    display: none;
-  }
+  .step-body { padding: 0 18px 18px; display: none; }
   .step.open .step-body { display: block; }
   .step.open .step-toggle { transform: rotate(180deg); }
 
-  /* ── EXPLAIN BOX ──────────────────────────────── */
-  .explain {
-    background: rgba(56,189,248,0.06);
-    border: 1px solid rgba(56,189,248,0.18);
+  /* ── CALLOUT BOXES ────────────────────────────────────── */
+  .box {
     border-radius: 8px;
     padding: 14px 16px;
     margin: 12px 0;
-    font-size: 14px;
-    color: #a0d4f0;
+    font-size: 13.5px;
+    line-height: 1.65;
   }
-  .explain strong { color: var(--accent2); }
+  .box.info  { background:rgba(56,200,240,.06); border:1px solid rgba(56,200,240,.18); color:#8dd8f0; }
+  .box.warn  { background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.22); color:#f5c05a; }
+  .box.tip   { background:rgba(167,139,250,.07); border:1px solid rgba(167,139,250,.2); color:#c4b1fa; }
+  .box.good  { background:rgba(34,197,94,.06); border:1px solid rgba(34,197,94,.2); color:#7edfa0; }
+  .box.danger{ background:rgba(240,81,110,.07); border:1px solid rgba(240,81,110,.2); color:#f0937f; }
+  .box strong { color: inherit; filter: brightness(1.3); }
+  .box code { background:rgba(255,255,255,.08); padding:1px 5px; border-radius:3px; font-size:12px; font-family:'IBM Plex Mono',monospace; }
 
-  .warn-box {
-    background: rgba(245,158,11,0.07);
-    border: 1px solid rgba(245,158,11,0.22);
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin: 12px 0;
-    font-size: 14px;
-    color: #f5c05a;
-  }
-
-  .tip-box {
-    background: rgba(167,139,250,0.07);
-    border: 1px solid rgba(167,139,250,0.2);
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin: 12px 0;
-    font-size: 14px;
-    color: #c4b1fa;
-  }
-
-  /* ── CODE ─────────────────────────────────────── */
+  /* ── CODE ─────────────────────────────────────────────── */
   .code-block {
     background: var(--code-bg);
     border: 1px solid var(--border);
@@ -211,426 +270,916 @@
     margin: 12px 0;
   }
   .code-label {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 13px;
     border-bottom: 1px solid var(--border);
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
+    font-size: 10px; color: var(--muted);
   }
-  .code-label span { color: var(--accent); }
+  .code-label .cl-name { color: var(--accent2); }
   pre {
-    padding: 16px;
+    padding: 14px 16px;
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    line-height: 1.7;
-    tab-size: 4;
-    white-space: pre;
+    font-size: 12.5px; line-height: 1.75;
+    tab-size: 4; white-space: pre;
   }
-  .c-comment { color: #4a5568; }
+  .c-comment { color: #394560; }
   .c-key     { color: #a78bfa; }
   .c-str     { color: #86efac; }
-  .c-cmd     { color: #38bdf8; }
+  .c-cmd     { color: #38c8f0; }
   .c-num     { color: #fb923c; }
   .c-flag    { color: #f59e0b; }
   .c-fn      { color: #f472b6; }
+  .c-cls     { color: #67e8f9; }
+  .c-dec     { color: #fbbf24; }
 
-  /* ── FILE TREE ────────────────────────────────── */
+  /* ── FILE TREE ────────────────────────────────────────── */
   .file-tree {
     background: var(--code-bg);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 16px;
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    line-height: 1.9;
+    font-size: 12.5px; line-height: 2;
     margin: 12px 0;
   }
   .ft-dir  { color: var(--accent2); }
-  .ft-file { color: var(--muted); }
+  .ft-file { color: var(--text2); }
   .ft-imp  { color: var(--text); }
-  .ft-note { color: #4a5568; font-size: 11px; }
+  .ft-note { color: #353d55; font-size: 11px; }
+  .ft-new  { color: var(--accent4); font-size: 11px; }
 
-  /* ── CHECKLIST ────────────────────────────────── */
+  /* ── TABLE ────────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; margin: 12px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left; padding: 9px 13px;
+    border-bottom: 1px solid var(--border2);
+    font-size: 10px; color: var(--muted);
+    font-weight: 600; font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: .08em; text-transform: uppercase;
+    background: var(--surface2);
+  }
+  td { padding: 9px 13px; border-bottom: 1px solid rgba(34,39,54,.6); color: var(--text2); vertical-align: top; }
+  td:first-child { color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.015); }
+
+  /* ── CHECKLIST ────────────────────────────────────────── */
   .checklist { list-style: none; margin: 10px 0; }
   .checklist li {
     display: flex; gap: 10px; align-items: flex-start;
-    font-size: 14px; color: var(--muted); padding: 4px 0;
+    font-size: 13.5px; color: var(--text2); padding: 5px 0;
   }
-  .checklist li::before {
-    content: '□';
-    color: var(--border);
-    font-size: 16px;
-    flex-shrink: 0;
-  }
+  .checklist li::before { content:'□'; color:var(--border2); font-size:16px; flex-shrink:0; }
 
-  /* ── ARCH DIAGRAM ─────────────────────────────── */
-  .arch {
+  /* ── SECTION HEADING (inline) ─────────────────────────── */
+  .sh {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .1em; color: var(--accent);
+    margin: 20px 0 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sh::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  p { margin: 8px 0; color: var(--text2); font-size: 14px; }
+  strong { color: var(--text); }
+  code { background:rgba(255,255,255,.06); padding:1px 5px; border-radius:3px; font-size:12px; font-family:'IBM Plex Mono',monospace; color:var(--accent2); }
+
+  /* ── REVIEW GRID ──────────────────────────────────────── */
+  .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 20px 0; }
+  @media (max-width: 680px) { .review-grid { grid-template-columns: 1fr; } }
+  .review-card { border-radius: 10px; padding: 18px 20px; border: 1px solid var(--border); }
+  .review-card.good { background:rgba(34,197,94,.05); border-color:rgba(34,197,94,.18); }
+  .review-card.bad  { background:rgba(240,81,110,.05); border-color:rgba(240,81,110,.18); }
+  .review-card h3 { font-size: 11px; font-weight: 600; letter-spacing:.06em; text-transform:uppercase; margin-bottom:10px; }
+  .review-card.good h3 { color: var(--success); }
+  .review-card.bad  h3 { color: var(--danger); }
+  .review-card ul { list-style: none; }
+  .review-card ul li { font-size:13px; color:var(--text2); padding:3px 0; display:flex; gap:8px; align-items:flex-start; }
+  .review-card ul li::before { flex-shrink:0; margin-top:6px; width:5px; height:5px; border-radius:50%; display:block; content:''; }
+  .review-card.good ul li::before { background:var(--success); }
+  .review-card.bad  ul li::before { background:var(--danger); }
+
+  /* ── ARCH DIAGRAM ─────────────────────────────────────── */
+  .arch-section {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 28px;
-    margin: 32px 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    justify-content: center;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
+    margin: 20px 0;
   }
+  .arch-title { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; font-family:'IBM Plex Mono',monospace; margin-bottom:20px; }
+  .arch-row { display:flex; align-items:center; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:16px; }
+  .arch-row:last-child { margin-bottom:0; }
   .arch-box {
     background: var(--surface2);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border2);
     border-radius: 8px;
     padding: 10px 16px;
     text-align: center;
-    min-width: 100px;
+    min-width: 110px;
   }
-  .arch-box .label { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
-  .arch-box .name  { color: var(--text); font-size: 13px; }
-  .arch-box.hi { border-color: rgba(91,106,240,0.5); background: rgba(91,106,240,0.08); }
-  .arch-arrow { color: var(--muted); font-size: 18px; padding: 0 4px; }
+  .arch-box .ab-label { font-size:9px; color:var(--muted); font-family:'IBM Plex Mono',monospace; text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px; }
+  .arch-box .ab-name  { color:var(--text); font-size:13px; font-weight:600; }
+  .arch-box .ab-sub   { font-size:10px; color:var(--muted); font-family:'IBM Plex Mono',monospace; margin-top:2px; }
+  .arch-box.hi-blue  { border-color:rgba(98,114,240,.5); background:rgba(98,114,240,.08); }
+  .arch-box.hi-cyan  { border-color:rgba(56,200,240,.4); background:rgba(56,200,240,.06); }
+  .arch-box.hi-green { border-color:rgba(52,211,153,.4); background:rgba(52,211,153,.06); }
+  .arch-box.hi-amber { border-color:rgba(245,158,11,.4); background:rgba(245,158,11,.06); }
+  .arch-box.hi-purple{ border-color:rgba(167,139,250,.4); background:rgba(167,139,250,.06); }
+  .arch-arrow { color:var(--border2); font-size:18px; padding:0 2px; }
+  .arch-arrow.down { display:block; text-align:center; color:var(--border2); line-height:1.2; }
+  .arch-divider { width:100%; border:none; border-top:1px dashed var(--border); margin:10px 0; }
 
-  /* ── TABLE ────────────────────────────────────── */
-  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
-  th { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); font-weight: 500; font-family: 'IBM Plex Mono', monospace; letter-spacing: .05em; text-transform: uppercase; }
-  td { padding: 10px 14px; border-bottom: 1px solid rgba(37,41,54,0.5); color: var(--muted); }
-  td:first-child { color: var(--text); font-weight: 500; }
-  tr:last-child td { border-bottom: none; }
-
-  /* ── SECTION HEADING ──────────────────────────── */
-  .section-heading {
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    color: var(--accent);
-    margin: 20px 0 10px;
-    font-family: 'IBM Plex Mono', monospace;
-  }
-
-  p { margin: 10px 0; color: var(--muted); font-size: 14px; }
-  strong { color: var(--text); }
-
-  /* ── TOC ──────────────────────────────────────── */
-  .toc {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-    margin: 32px 0;
+  /* ── DB SCHEMA DIAGRAM ────────────────────────────────── */
+  .schema-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 10px;
+    margin: 16px 0;
   }
-  @media (max-width: 560px) { .toc { grid-template-columns: 1fr; } }
-  .toc a {
-    display: flex; align-items: center; gap: 10px;
-    text-decoration: none; color: var(--muted);
-    font-size: 14px; padding: 8px 10px;
-    border-radius: 6px; transition: background .15s;
+  .schema-table {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
   }
-  .toc a:hover { background: var(--surface2); color: var(--text); }
-  .toc a .n { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--accent); min-width: 20px; }
+  .st-header {
+    background: rgba(98,114,240,.12);
+    border-bottom: 1px solid var(--border2);
+    padding: 7px 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .st-name { color: var(--accent); font-weight: 600; font-size: 12px; }
+  .st-count { color: var(--muted); font-size: 10px; margin-left:auto; }
+  .st-row { padding: 4px 12px; display:flex; gap:8px; border-bottom:1px solid rgba(34,39,54,.5); }
+  .st-row:last-child { border-bottom:none; }
+  .st-col { color: var(--text2); }
+  .st-type { color: var(--muted); margin-left:auto; font-size:10px; }
+  .st-pk { color: var(--warn); }
+  .st-fk { color: var(--accent2); }
+
+  /* ── COMPARISON TABLE ─────────────────────────────────── */
+  .compare-table { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border:1px solid var(--border2); border-radius:10px; overflow:hidden; margin:16px 0; }
+  .ct-head {
+    padding: 10px 16px;
+    font-size: 11px; font-weight: 600; letter-spacing:.06em; text-transform:uppercase;
+    font-family:'IBM Plex Mono',monospace;
+    border-bottom: 1px solid var(--border2);
+  }
+  .ct-head.old { background:rgba(240,81,110,.08); color:var(--danger); border-right:1px solid var(--border2); }
+  .ct-head.new { background:rgba(98,114,240,.08); color:var(--accent); }
+  .ct-row { padding: 9px 16px; border-bottom:1px solid rgba(34,39,54,.5); font-size:13px; color:var(--text2); }
+  .ct-row:last-child { border-bottom:none; }
+  .ct-col:first-child .ct-row { border-right:1px solid var(--border2); }
+  .ct-row.hi { color:var(--text); }
+
+  /* ── RESPONSIVE ───────────────────────────────────────── */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .hero, .wrapper { padding-left: 24px; padding-right: 24px; }
+    .schema-grid { grid-template-columns: 1fr; }
+    .compare-table { grid-template-columns: 1fr; }
+    .ct-head.old, .ct-col:first-child .ct-row { border-right: none; border-bottom: 1px solid var(--border2); }
+  }
+
+  /* ── HIGHLIGHT LINE ───────────────────────────────────── */
+  .hl-line { background:rgba(98,114,240,.08); border-left:2px solid var(--accent); }
+  .new-badge { display:inline-block; font-size:9px; background:rgba(52,211,153,.15); color:var(--accent4); border-radius:3px; padding:1px 5px; font-family:'IBM Plex Mono',monospace; vertical-align:middle; margin-left:4px; letter-spacing:.05em; }
+  .why-badge { display:inline-block; font-size:9px; background:rgba(245,158,11,.12); color:var(--warn); border-radius:3px; padding:1px 5px; font-family:'IBM Plex Mono',monospace; vertical-align:middle; margin-left:4px; }
+
+  /* ── FLOW DIAGRAM ─────────────────────────────────────── */
+  .flow {
+    display: flex; align-items: stretch; gap: 0;
+    margin: 16px 0; overflow-x: auto;
+    background: var(--surface2); border:1px solid var(--border2); border-radius:10px;
+  }
+  .flow-step {
+    padding: 16px 18px; flex: 1; min-width: 120px;
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .flow-step:last-child { border-right: none; }
+  .flow-step .fs-num { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted); margin-bottom:6px; }
+  .flow-step .fs-name { font-size:13px; font-weight:600; color:var(--text); margin-bottom:4px; }
+  .flow-step .fs-sub { font-size:11px; color:var(--muted); }
+  .flow-step::after {
+    content:'›';
+    position:absolute; right:-10px; top:50%; transform:translateY(-50%);
+    color:var(--border2); font-size:20px; z-index:1;
+  }
+  .flow-step:last-child::after { display:none; }
 </style>
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-tag">FilmSite</div>
+    <div class="logo-name">Kế Hoạch<br>Xây Dựng</div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">Phân tích</div>
+    <a href="#why-diff" class="nav-item">
+      <span class="ni">🔍</span> Tại sao DB khác?
+    </a>
+    <a href="#arch" class="nav-item">
+      <span class="ni">🏗️</span> Kiến trúc hệ thống
+    </a>
+    <a href="#db-schema" class="nav-item">
+      <span class="ni">🗄️</span> Sơ đồ Database
+    </a>
+    <a href="#review" class="nav-item">
+      <span class="ni">📋</span> Đánh giá
+    </a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">Giai đoạn</div>
+    <a href="#p0" class="nav-item">
+      <span class="ni">📁</span> Cấu trúc dự án <span class="np">P0</span>
+    </a>
+    <a href="#p1" class="nav-item">
+      <span class="ni">⚙️</span> Môi trường <span class="np">P1</span>
+    </a>
+    <a href="#p2" class="nav-item">
+      <span class="ni">🐍</span> Backend Django <span class="np">P2</span>
+    </a>
+    <a href="#p3" class="nav-item">
+      <span class="ni">🎞️</span> Video Pipeline <span class="np">P3</span>
+    </a>
+    <a href="#p4" class="nav-item">
+      <span class="ni">🕷️</span> Metadata Crawler <span class="np">P4</span>
+    </a>
+    <a href="#p5" class="nav-item">
+      <span class="ni">🎨</span> Frontend <span class="np">P5</span>
+    </a>
+    <a href="#p6" class="nav-item">
+      <span class="ni">🌐</span> Triển khai Caddy <span class="np">P6</span>
+    </a>
+    <a href="#p7" class="nav-item">
+      <span class="ni">🛡️</span> Bảo trì & Backup <span class="np">★</span>
+    </a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════════════ -->
+<div class="main">
+
+<!-- HERO -->
 <div class="hero">
-  <div class="badge">PHÂN TÍCH & TỐI ƯU</div>
-  <h1>Kế Hoạch Xây Dựng<br><span>Web Phim Streaming</span><br>trên Windows</h1>
-  <p>Nhận xét toàn diện, tái cấu trúc và bổ sung chi tiết cho từng giai đoạn — từ cài đặt môi trường đến triển khai mạng LAN hoàn chỉnh.</p>
+  <div class="hero-eyebrow">
+    <span class="badge">Phiên bản 2.0</span>
+    <span class="badge green">Windows · Django · PostgreSQL</span>
+    <span class="badge amber">HLS Streaming</span>
+  </div>
+  <h1>Kế Hoạch Xây Dựng<br><span class="hl">Web Phim Streaming</span><br><span class="hl2">Kiến Trúc Đầy Đủ</span></h1>
+  <p class="hero-desc">
+    Tài liệu hoàn chỉnh từ thiết kế database chuẩn hóa, kiến trúc hệ thống, pipeline xử lý video HLS, đến triển khai mạng LAN Windows. Bao gồm giải thích chi tiết vì sao mỗi quyết định kỹ thuật được đưa ra.
+  </p>
 </div>
 
 <div class="wrapper">
 
-  <!-- REVIEW -->
-  <div class="phase-header" style="margin-top:40px">
-    <div class="phase-num">NHẬN XÉT</div>
-    <h2>Đánh Giá Kế Hoạch Gốc</h2>
+<!-- ═══════════════════════════════════════════════
+     TẠI SAO DB KHÁC KẾ HOẠCH?
+════════════════════════════════════════════════════ -->
+<div class="section" id="why-diff">
+  <div class="section-header">
+    <div class="section-num">⚡ QUAN TRỌNG</div>
+    <h2>Tại Sao Database Khác Kế Hoạch Gốc?</h2>
   </div>
 
+  <div class="box info">
+    <strong>Đây là câu hỏi quan trọng nhất.</strong> Kế hoạch gốc dùng 3 bảng đơn giản (Genre, Movie, Episode). Database tôi build theo design.md có 14 bảng chuẩn hóa. Không phải tôi làm sai — hai cái này phục vụ hai mục tiêu khác nhau và cả hai đều đúng trong ngữ cảnh của chúng.
+  </div>
+
+  <div class="compare-table">
+    <div class="ct-col">
+      <div class="ct-head old">✗ Kế hoạch gốc — 3 bảng</div>
+      <div class="ct-row">Genre (id, name)</div>
+      <div class="ct-row hi">Movie (title, slug, poster, rating, status…)</div>
+      <div class="ct-row">Episode (movie, episode_num, video_url, status)</div>
+      <div class="ct-row" style="color:var(--muted);">— không có</div>
+      <div class="ct-row" style="color:var(--muted);">— không có</div>
+      <div class="ct-row" style="color:var(--muted);">— không có</div>
+      <div class="ct-row" style="color:var(--muted);">— không có</div>
+    </div>
+    <div class="ct-col">
+      <div class="ct-head new">✓ Design.md — 14 bảng chuẩn hóa</div>
+      <div class="ct-row">genres + tags + movie_genres + movie_tags</div>
+      <div class="ct-row hi">movies (+ medium_type, content_rating, imdb_id, backdrop, thumbnail…)</div>
+      <div class="ct-row">episodes (+ season_number, m3u8_path, air_date, is_free…)</div>
+      <div class="ct-row">subtitles (phụ đề đa ngôn ngữ)</div>
+      <div class="ct-row">trailers (YouTube + server)</div>
+      <div class="ct-row">people + movie_cast_crew (diễn viên, đạo diễn)</div>
+      <div class="ct-row">countries + studios + movie_countries + movie_studios</div>
+    </div>
+  </div>
+
+  <p class="sh">Vì sao cần nhiều bảng hơn?</p>
+
+  <div class="step open">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🎭</div>
+      <div class="step-name">Lý do 1 — Dữ liệu quan hệ nhiều-nhiều (Many-to-Many)</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <p>Một bộ phim có <strong>nhiều thể loại</strong> (Action, Comedy, Thriller) và một thể loại có <strong>nhiều phim</strong>. Nếu lưu genres vào cột trong bảng movies:</p>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">BAD — Lưu genres dạng string trong Movie</span></div>
+        <pre><span class="c-comment"># ❌ Sai — không thể query hiệu quả</span>
+movie.genres = <span class="c-str">"Action, Comedy, Thriller"</span>
+
+<span class="c-comment"># Muốn lấy tất cả phim Action thì phải LIKE '%Action%'</span>
+<span class="c-comment"># → Không dùng index được → Scan toàn bộ bảng → Chậm</span>
+Movie.objects.filter(genres__icontains=<span class="c-str">'Action'</span>)  <span class="c-comment"># ❌</span></pre>
+      </div>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">GOOD — M2M through table</span></div>
+        <pre><span class="c-comment"># ✓ Đúng — query có index, cực nhanh</span>
+Movie.objects.filter(genres__slug=<span class="c-str">'action'</span>)  <span class="c-comment"># ✓</span>
+Movie.objects.filter(genres__slug=<span class="c-str">'action'</span>, countries__country_code=<span class="c-str">'KR'</span>)  <span class="c-comment"># ✓</span></pre>
+      </div>
+      <p>Tương tự với: diễn viên (1 người đóng nhiều phim), quốc gia, studio, tags.</p>
+    </div>
+  </div>
+
+  <div class="step open">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">📺</div>
+      <div class="step-name">Lý do 2 — Phân biệt loại nội dung (medium_type)</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <p>Kế hoạch gốc không phân biệt <strong>Movie vs Series vs Anime vs OVA</strong>. Điều này ảnh hưởng trực tiếp đến UI:</p>
+      <div class="box warn">
+        <strong>Vấn đề thực tế:</strong> Phim lẻ cần ẩn danh sách tập. Series cần dropdown chọn mùa. Anime Movie khác Anime Series. OVA cần liên kết về series cha. Nếu không có trường <code>medium_type</code>, frontend không biết hiển thị gì.
+      </div>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">Phân biệt trong template Django</span></div>
+        <pre>{% <span class="c-key">if</span> movie.medium_type == <span class="c-str">'Movie'</span> %}
+    <span class="c-comment">&lt;!-- Phim lẻ: ẩn danh sách tập, phát thẳng --&gt;</span>
+{% <span class="c-key">elif</span> movie.medium_type <span class="c-key">in</span> [<span class="c-str">'Series'</span>, <span class="c-str">'Anime'</span>] %}
+    <span class="c-comment">&lt;!-- Series: hiện dropdown mùa + danh sách tập --&gt;</span>
+{% <span class="c-key">elif</span> movie.medium_type == <span class="c-str">'OVA'</span> %}
+    <span class="c-comment">&lt;!-- OVA: hiện link về series chính --&gt;</span>
+{% <span class="c-key">endif</span> %}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🌍</div>
+      <div class="step-name">Lý do 3 — Phụ đề, trailer, diễn viên là tính năng cốt lõi</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <p>Một website phim chuyên nghiệp cần:</p>
+      <ul class="checklist">
+        <li><strong>Subtitles:</strong> Mỗi tập có thể có Vietsub, Engsub, Korsub. Player cần load đúng file .vtt theo ngôn ngữ người dùng chọn.</li>
+        <li><strong>Trailers:</strong> Official Trailer, Teaser, Behind the Scenes — mỗi cái là một bản ghi riêng.</li>
+        <li><strong>Cast & Crew:</strong> Người dùng click vào tên đạo diễn → xem tất cả phim của họ. Không thể làm điều này nếu chỉ lưu tên đạo diễn dạng text.</li>
+        <li><strong>Seasons:</strong> Kế hoạch gốc thiếu <code>season_number</code> trong Episode → không handle được series nhiều mùa.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">💡</div>
+      <div class="step-name">Tóm lại — Nên dùng cái nào?</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <div class="review-grid">
+        <div class="review-card bad">
+          <h3>Kế hoạch gốc (3 bảng)</h3>
+          <ul>
+            <li>Phù hợp cho prototype/demo nhanh</li>
+            <li>Code ít hơn, dễ hiểu hơn ban đầu</li>
+            <li>Không scale được khi thêm tính năng</li>
+            <li>Thiếu phụ đề, trailer, cast, seasons</li>
+            <li>Query phức tạp khi filter nhiều điều kiện</li>
+          </ul>
+        </div>
+        <div class="review-card good">
+          <h3>Design.md (14 bảng)</h3>
+          <ul>
+            <li>Chuẩn hóa 3NF — không trùng lặp dữ liệu</li>
+            <li>Hỗ trợ đầy đủ phụ đề, trailers, cast & crew</li>
+            <li>Filter phức tạp vẫn nhanh nhờ index</li>
+            <li>Dễ thêm tính năng mới mà không phá schema cũ</li>
+            <li>Đây là cách Netflix, IMDB thiết kế DB</li>
+          </ul>
+        </div>
+      </div>
+      <div class="box good">
+        <strong>Khuyến nghị:</strong> Dùng schema 14 bảng từ design.md. Kế hoạch này (plan.html) sẽ được cập nhật để phản ánh đúng schema đó. Phần models.py bên dưới đã được viết lại hoàn toàn.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     KIẾN TRÚC HỆ THỐNG
+════════════════════════════════════════════════════ -->
+<div class="section" id="arch">
+  <div class="section-header">
+    <div class="section-num">ARCHITECTURE</div>
+    <h2>Kiến Trúc Hệ Thống Hoàn Chỉnh</h2>
+  </div>
+
+  <p class="sh">Luồng Request khi người dùng xem phim</p>
+  <div class="arch-section">
+    <div class="arch-title">Request Flow — Browser → Caddy → Django/Static</div>
+    <div class="arch-row">
+      <div class="arch-box hi-cyan">
+        <div class="ab-label">Client</div>
+        <div class="ab-name">Trình duyệt</div>
+        <div class="ab-sub">hls.js / Safari</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box hi-blue">
+        <div class="ab-label">Reverse Proxy</div>
+        <div class="ab-name">Caddy :80</div>
+        <div class="ab-sub">Routing + Cache</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box hi-green" style="text-align:left;min-width:200px;">
+        <div class="ab-label">Routes</div>
+        <div class="ab-name">/static/* → File server</div>
+        <div class="ab-name">/media/* → File server (HLS)</div>
+        <div class="ab-name">/* → Django :8000</div>
+      </div>
+    </div>
+    <hr class="arch-divider">
+    <div class="arch-row">
+      <div class="arch-box hi-purple">
+        <div class="ab-label">App Server</div>
+        <div class="ab-name">Waitress :8000</div>
+        <div class="ab-sub">8 threads</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box hi-blue">
+        <div class="ab-label">Web Framework</div>
+        <div class="ab-name">Django</div>
+        <div class="ab-sub">Views · ORM · Templates</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box hi-amber">
+        <div class="ab-label">Database</div>
+        <div class="ab-name">PostgreSQL :5432</div>
+        <div class="ab-sub">14 tables · Indexed</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="sh">Data pipeline — Thêm phim mới vào hệ thống</p>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="fs-num">01</div>
+      <div class="fs-name">Drop file</div>
+      <div class="fs-sub">ten-phim_tap-1.mp4 vào raw_videos/</div>
+    </div>
+    <div class="flow-step">
+      <div class="fs-num">02</div>
+      <div class="fs-name">Processor</div>
+      <div class="fs-sub">processor.py chạy FFmpeg encode HLS</div>
+    </div>
+    <div class="flow-step">
+      <div class="fs-num">03</div>
+      <div class="fs-name">HLS Output</div>
+      <div class="fs-sub">output.m3u8 + output.ts vào media/hls_streams/</div>
+    </div>
+    <div class="flow-step">
+      <div class="fs-num">04</div>
+      <div class="fs-name">DB Record</div>
+      <div class="fs-sub">Movie + Episode tạo trong PostgreSQL</div>
+    </div>
+    <div class="flow-step">
+      <div class="fs-num">05</div>
+      <div class="fs-name">Crawler</div>
+      <div class="fs-sub">fetch_metadata.py gọi Jikan/TMDB API</div>
+    </div>
+    <div class="flow-step">
+      <div class="fs-num">06</div>
+      <div class="fs-name">Live</div>
+      <div class="fs-sub">Phim xuất hiện trên site ✓</div>
+    </div>
+  </div>
+
+  <p class="sh">Cache strategy — Caddy phục vụ media</p>
+  <div class="arch-section">
+    <div class="arch-title">File Serving & Cache Headers</div>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Loại file</th><th>Nơi phục vụ</th><th>Cache-Control</th><th>Lý do</th></tr>
+        <tr><td>*.css, *.js</td><td>Caddy (static/)</td><td>public, max-age=86400</td><td>Thay đổi ít, cache 1 ngày</td></tr>
+        <tr><td>*.webp (poster)</td><td>Caddy (media/)</td><td>public, max-age=604800</td><td>Ảnh không thay đổi, cache 7 ngày</td></tr>
+        <tr><td>*.m3u8</td><td>Caddy (media/)</td><td>no-cache, no-store</td><td>Manifest thay đổi khi upload tập mới</td></tr>
+        <tr><td>*.ts</td><td>Caddy (media/)</td><td>public, max-age=604800</td><td>Video segment bất biến, cache mạnh</td></tr>
+        <tr><td>HTML pages</td><td>Django → Caddy</td><td>no-cache</td><td>Nội dung động, không cache</td></tr>
+        <tr><td>API responses</td><td>Django → Caddy</td><td>no-cache</td><td>Dữ liệu real-time</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     DB SCHEMA
+════════════════════════════════════════════════════ -->
+<div class="section" id="db-schema">
+  <div class="section-header">
+    <div class="section-num">DATABASE</div>
+    <h2>Sơ Đồ Database — 14 Bảng</h2>
+  </div>
+
+  <div class="box info">
+    <strong>Nguyên tắc thiết kế:</strong> Chuẩn hóa 3NF — không lưu thông tin trùng lặp. Phim lẻ và phim bộ dùng chung bảng <code>movies</code>, phân biệt qua <code>medium_type</code>. Mọi đường dẫn media lưu dạng URL tương đối (CDN-ready).
+  </div>
+
+  <p class="sh">Sơ đồ quan hệ</p>
+  <div class="code-block">
+    <div class="code-label"><span class="cl-name">Entity Relationship Diagram</span></div>
+    <pre>
+  <span class="c-fn">movies</span> ──&lt; <span class="c-cls">episodes</span> ──&lt; <span class="c-str">subtitles</span>
+    │
+    ├──&lt; <span class="c-str">trailers</span>
+    │
+    ├──&lt; <span class="c-cls">movie_genres</span>    &gt;──  <span class="c-fn">genres</span>
+    ├──&lt; <span class="c-cls">movie_tags</span>      &gt;──  <span class="c-str">tags</span>
+    ├──&lt; <span class="c-cls">movie_countries</span> &gt;──  <span class="c-fn">countries</span>
+    ├──&lt; <span class="c-cls">movie_cast_crew</span> &gt;──  <span class="c-fn">people</span>
+    ├──&lt; <span class="c-cls">movie_studios</span>   &gt;──  <span class="c-str">studios</span>
+    │
+    └──  <span class="c-comment">parent_movie (self-ref cho OVA/Special)</span>
+    </pre>
+  </div>
+
+  <p class="sh">Chi tiết các bảng chính</p>
+  <div class="schema-grid">
+    <div class="schema-table">
+      <div class="st-header"><div class="st-name">movies</div><div class="st-count">bảng trung tâm</div></div>
+      <div class="st-row"><div class="st-col st-pk">movie_id</div><div class="st-type">PK</div></div>
+      <div class="st-row"><div class="st-col">title, original_title</div><div class="st-type">VARCHAR</div></div>
+      <div class="st-row"><div class="st-col">slug</div><div class="st-type">UNIQUE</div></div>
+      <div class="st-row"><div class="st-col">medium_type</div><div class="st-type">ENUM(10)</div></div>
+      <div class="st-row"><div class="st-col">status</div><div class="st-type">ENUM(6)</div></div>
+      <div class="st-row"><div class="st-col">content_rating</div><div class="st-type">ENUM</div></div>
+      <div class="st-row"><div class="st-col">imdb_rating, imdb_id</div><div class="st-type">DEC/CHAR</div></div>
+      <div class="st-row"><div class="st-col">poster_path, thumbnail_path, backdrop_path</div><div class="st-type">VARCHAR</div></div>
+      <div class="st-row"><div class="st-col">is_featured, is_hidden, view_count</div><div class="st-type">BOOL/BIGINT</div></div>
+      <div class="st-row"><div class="st-col st-fk">parent_movie_id</div><div class="st-type">FK → self</div></div>
+    </div>
+    <div class="schema-table">
+      <div class="st-header"><div class="st-name">episodes</div><div class="st-count">media chính</div></div>
+      <div class="st-row"><div class="st-col st-pk">episode_id</div><div class="st-type">PK</div></div>
+      <div class="st-row"><div class="st-col st-fk">movie_id</div><div class="st-type">FK → movies</div></div>
+      <div class="st-row"><div class="st-col">season_number</div><div class="st-type">INT DEFAULT 1</div></div>
+      <div class="st-row"><div class="st-col">episode_number</div><div class="st-type">INT NOT NULL</div></div>
+      <div class="st-row"><div class="st-col">episode_name</div><div class="st-type">VARCHAR</div></div>
+      <div class="st-row"><div class="st-col">m3u8_path</div><div class="st-type">HLS stream URL</div></div>
+      <div class="st-row"><div class="st-col">movie_file_path</div><div class="st-type">MP4 download</div></div>
+      <div class="st-row"><div class="st-col">duration</div><div class="st-type">INT (phút)</div></div>
+      <div class="st-row"><div class="st-col">air_date</div><div class="st-type">DATE</div></div>
+      <div class="st-row"><div class="st-col">view_count, is_free</div><div class="st-type">BIGINT/BOOL</div></div>
+    </div>
+    <div class="schema-table">
+      <div class="st-header"><div class="st-name">people</div><div class="st-count">diễn viên & đạo diễn</div></div>
+      <div class="st-row"><div class="st-col st-pk">person_id</div><div class="st-type">PK</div></div>
+      <div class="st-row"><div class="st-col">full_name, original_name</div><div class="st-type">VARCHAR</div></div>
+      <div class="st-row"><div class="st-col">slug, avatar_path</div><div class="st-type">UNIQUE/VARCHAR</div></div>
+      <div class="st-row"><div class="st-col">bio, birth_date, nationality, gender</div><div class="st-type">TEXT/DATE…</div></div>
+    </div>
+    <div class="schema-table">
+      <div class="st-header"><div class="st-name">movie_cast_crew</div><div class="st-count">M2M + role</div></div>
+      <div class="st-row"><div class="st-col st-fk">movie_id</div><div class="st-type">FK → movies</div></div>
+      <div class="st-row"><div class="st-col st-fk">person_id</div><div class="st-type">FK → people</div></div>
+      <div class="st-row"><div class="st-col">role</div><div class="st-type">ENUM(13 roles)</div></div>
+      <div class="st-row"><div class="st-col">character_name</div><div class="st-type">VARCHAR</div></div>
+      <div class="st-row"><div class="st-col">sort_order</div><div class="st-type">INT</div></div>
+    </div>
+    <div class="schema-table">
+      <div class="st-header"><div class="st-name">subtitles</div><div class="st-count">phụ đề đa ngôn ngữ</div></div>
+      <div class="st-row"><div class="st-col st-pk">sub_id</div><div class="st-type">PK</div></div>
+      <div class="st-row"><div class="st-col st-fk">episode_id</div><div class="st-type">FK → episodes</div></div>
+      <div class="st-row"><div class="st-col">language_code</div><div class="st-type">vi/en/ko/zh…</div></div>
+      <div class="st-row"><div class="st-col">language_label</div><div class="st-type">Vietsub/Engsub</div></div>
+      <div class="st-row"><div class="st-col">sub_path, format</div><div class="st-type">.vtt/.srt/.ass</div></div>
+      <div class="st-row"><div class="st-col">is_default</div><div class="st-type">BOOL</div></div>
+    </div>
+    <div class="schema-table">
+      <div class="st-header"><div class="st-name">trailers</div><div class="st-count">YouTube & server</div></div>
+      <div class="st-row"><div class="st-col st-pk">trailer_id</div><div class="st-type">PK</div></div>
+      <div class="st-row"><div class="st-col st-fk">movie_id</div><div class="st-type">FK → movies</div></div>
+      <div class="st-row"><div class="st-col">trailer_path</div><div class="st-type">URL/path</div></div>
+      <div class="st-row"><div class="st-col">label</div><div class="st-type">ENUM(10 labels)</div></div>
+      <div class="st-row"><div class="st-col">language, sort_order</div><div class="st-type">VARCHAR/INT</div></div>
+    </div>
+  </div>
+
+  <p class="sh">ENUM values quan trọng</p>
+  <div class="step open">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">📋</div>
+      <div class="step-name">medium_type — Phân loại nội dung</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <div class="table-wrap"><table>
+        <tr><th>Giá trị</th><th>Mô tả</th><th>Số tập</th><th>Có mùa?</th></tr>
+        <tr><td>Movie</td><td>Phim lẻ</td><td>1</td><td>Không</td></tr>
+        <tr><td>Series</td><td>Phim bộ</td><td>N</td><td>Có thể</td></tr>
+        <tr><td>Anime</td><td>Anime series</td><td>N</td><td>Có thể</td></tr>
+        <tr><td>Anime Movie</td><td>Anime chiếu rạp</td><td>1</td><td>Không</td></tr>
+        <tr><td>OVA</td><td>Phần ngoại truyện</td><td>1-N</td><td>Không</td></tr>
+        <tr><td>Special</td><td>Tập đặc biệt</td><td>1</td><td>Không</td></tr>
+        <tr><td>Documentary</td><td>Phim tài liệu</td><td>1 hoặc N</td><td>Có thể</td></tr>
+        <tr><td>Short Film</td><td>Phim ngắn</td><td>1</td><td>Không</td></tr>
+        <tr><td>Mini-Series</td><td>Series ngắn</td><td>3-10</td><td>Không</td></tr>
+        <tr><td>TV Movie</td><td>Phim TV</td><td>1</td><td>Không</td></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🎭</div>
+      <div class="step-name">movie_cast_crew.role — Vai trò đoàn phim</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <div class="table-wrap"><table>
+        <tr><th>Role</th><th>Mô tả</th></tr>
+        <tr><td>Director</td><td>Đạo diễn</td></tr>
+        <tr><td>Cast</td><td>Diễn viên (lưu thêm character_name)</td></tr>
+        <tr><td>Screenwriter</td><td>Biên kịch</td></tr>
+        <tr><td>Producer</td><td>Nhà sản xuất</td></tr>
+        <tr><td>Executive Producer</td><td>Nhà sản xuất điều hành</td></tr>
+        <tr><td>Cinematographer</td><td>Quay phim (Director of Photography)</td></tr>
+        <tr><td>Composer</td><td>Nhạc sĩ soạn nhạc nền</td></tr>
+        <tr><td>Editor</td><td>Dựng phim</td></tr>
+        <tr><td>Voice Actor</td><td>Lồng tiếng (Anime/hoạt hình)</td></tr>
+        <tr><td>Visual Effects Supervisor</td><td>Giám sát VFX</td></tr>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW -->
+<div class="section" id="review">
+  <div class="section-header">
+    <div class="section-num">NHẬN XÉT</div>
+    <h2>Đánh Giá Kế Hoạch Gốc</h2>
+  </div>
   <div class="review-grid">
     <div class="review-card good">
       <h3>✓ Điểm Tốt</h3>
       <ul>
-        <li>Stack kỹ thuật hợp lý: Django + PostgreSQL + Caddy là bộ ba rất solid</li>
-        <li>Byte-Range HLS (single_file) giảm số request, phù hợp mạng LAN</li>
-        <li>Tự động hóa xử lý video bằng subprocess — tư duy đúng hướng</li>
-        <li>Phân chia rõ ràng 6 giai đoạn, logic và tuần tự</li>
-        <li>Sử dụng Waitress thay vì django dev server — an toàn hơn</li>
+        <li>Stack kỹ thuật đúng: Django + PostgreSQL + Caddy</li>
+        <li>HLS byte-range (single_file) giảm số request, phù hợp LAN</li>
+        <li>Tự động hóa xử lý video bằng subprocess — tư duy đúng</li>
+        <li>Phân chia 7 giai đoạn rõ ràng, logic và tuần tự</li>
+        <li>Dùng Waitress thay vì Django dev server — an toàn</li>
+        <li>Có logging, có backup — biết lo xa</li>
       </ul>
     </div>
     <div class="review-card bad">
-      <h3>✗ Điểm Còn Thiếu</h3>
+      <h3>✗ Điểm Đã Sửa</h3>
       <ul>
-        <li>Không đề cập cấu trúc thư mục dự án cụ thể</li>
-        <li>Thiếu bảo mật: SECRET_KEY, DEBUG=False, ALLOWED_HOSTS</li>
-        <li>Thiếu xử lý lỗi trong script tự động hóa video</li>
-        <li>Không có cơ chế logging để debug khi có sự cố</li>
-        <li>Models Django quá sơ sài, thiếu nhiều trường quan trọng</li>
-        <li>Script crawler không có rate limiting — dễ bị block IP</li>
-        <li>Caddy config thiếu header bảo mật và cache control</li>
-        <li>Không có kế hoạch backup database</li>
-        <li>Thiếu hướng dẫn chạy tự động khi Windows khởi động</li>
+        <li>Models quá đơn giản — đã nâng lên 14 bảng chuẩn hóa</li>
+        <li>Thiếu medium_type → không phân biệt Movie/Series/Anime</li>
+        <li>Thiếu season_number → không handle series nhiều mùa</li>
+        <li>Thiếu subtitles, trailers, cast/crew, studios</li>
+        <li>Thiếu giải thích kiến trúc hệ thống — đã thêm đầy đủ</li>
+        <li>processor.py cần update để dùng models mới</li>
       </ul>
     </div>
   </div>
+</div>
 
-  <!-- ARCHITECTURE OVERVIEW -->
-  <div class="arch">
-    <div class="arch-box">
-      <div class="label">Trình duyệt</div>
-      <div class="name">video.js / hls.js</div>
-    </div>
-    <div class="arch-arrow">→</div>
-    <div class="arch-box hi">
-      <div class="label">Web Server</div>
-      <div class="name">Caddy :80</div>
-    </div>
-    <div class="arch-arrow">→</div>
-    <div class="arch-box hi">
-      <div class="label">App Server</div>
-      <div class="name">Django + Waitress :8000</div>
-    </div>
-    <div class="arch-arrow">→</div>
-    <div class="arch-box">
-      <div class="label">Database</div>
-      <div class="name">PostgreSQL :5432</div>
-    </div>
-  </div>
-  <p style="text-align:center; font-size:13px;">File tĩnh (CSS/JS/HLS) được Caddy phục vụ trực tiếp — không qua Django, giảm tải đáng kể</p>
-
-  <!-- PHASE 0 - PROJECT STRUCTURE -->
-  <div class="phase" id="p0">
-    <div class="phase-header">
-      <div class="phase-num">PHASE 0</div>
+<!-- ═══════════════════════════════════════════════
+     PHASE 0 — CẤU TRÚC DỰ ÁN
+════════════════════════════════════════════════════ -->
+<div class="section" id="p0">
+  <div class="project-container">
+    <div class="section-header">
+      <div style="color: #808080; font-size: 12px;">PHASE 0</div>
       <h2>Cấu Trúc Dự Án Đề Xuất</h2>
     </div>
-    <p>Trước khi bắt đầu cài đặt, hãy hình dung rõ cấu trúc thư mục cuối cùng. Một cấu trúc tốt giúp dễ bảo trì và tránh lỗi đường dẫn.</p>
+    <p style="color: #808080;">Hình dung rõ cấu trúc thư mục trước khi bắt đầu. Cấu trúc tốt giúp dễ bảo trì.</p>
+
     <div class="file-tree">
-<span class="ft-dir">C:\Projects\my_movie_web\</span>
-├── <span class="ft-dir">core/</span>              <span class="ft-note"># Django project config (settings, urls, wsgi)</span>
-│   ├── <span class="ft-imp">settings.py</span>
-│   ├── <span class="ft-imp">urls.py</span>
-│   └── <span class="ft-imp">wsgi.py</span>
-├── <span class="ft-dir">movies/</span>             <span class="ft-note"># Django app chính</span>
-│   ├── <span class="ft-imp">models.py</span>
-│   ├── <span class="ft-imp">views.py</span>
-│   ├── <span class="ft-imp">urls.py</span>
-│   ├── <span class="ft-imp">admin.py</span>
-│   └── <span class="ft-dir">templates/movies/</span>
-├── <span class="ft-dir">video_processor/</span>    <span class="ft-note"># Script xử lý video tự động</span>
-│   ├── <span class="ft-imp">processor.py</span>
-│   └── <span class="ft-dir">raw_videos/</span>       <span class="ft-note"># Drop .mp4 vào đây</span>
-├── <span class="ft-dir">crawlers/</span>           <span class="ft-note"># Script crawler metadata</span>
-│   └── <span class="ft-imp">fetch_metadata.py</span>
-├── <span class="ft-dir">media/</span>              <span class="ft-note"># MEDIA_ROOT — user-uploaded + generated files</span>
-│   ├── <span class="ft-dir">hls_streams/</span>      <span class="ft-note"># output.m3u8 + output.ts (tạo bởi script)</span>
-│   └── <span class="ft-dir">posters/</span>          <span class="ft-note"># Ảnh bìa tải về từ crawler</span>
-├── <span class="ft-dir">static/</span>             <span class="ft-note"># STATIC_ROOT sau collectstatic</span>
-├── <span class="ft-dir">logs/</span>               <span class="ft-note">★ MỚI: lưu log hệ thống</span>
-├── <span class="ft-imp">.env</span>                <span class="ft-note">★ MỚI: lưu secrets (không commit git!)</span>
-├── <span class="ft-imp">.gitignore</span>
-├── <span class="ft-imp">manage.py</span>
-├── <span class="ft-imp">requirements.txt</span>
-└── <span class="ft-dir">C:\Caddy\</span>
-    ├── <span class="ft-imp">caddy.exe</span>
-    └── <span class="ft-imp">Caddyfile</span>
+<div class="tree-item"><span class="dir">C:\Projects\filmsite\</span></div>
+<div class="tree-item">├── <span class="dir">config/</span>           <span class="note"># Django project config</span></div>
+<div class="tree-item">│   ├── <span class="imp">settings.py</span>      <span class="note"># DB, MEDIA, LOGGING config</span></div>
+<div class="tree-item">│   ├── <span class="imp">urls.py</span></div>
+<div class="tree-item">│   └── <span class="imp">wsgi.py</span></div>
+<div class="tree-item">│</div>
+<div class="tree-item">├── <span class="dir">films/</span>            <span class="note"># App chính (14 models)</span> <span class="new-tag">★ MỚI</span></div>
+<div class="tree-item">│   ├── <span class="imp">models.py</span>        <span class="note"># 14 models đầy đủ</span></div>
+<div class="tree-item">│   ├── <span class="imp">views.py</span>         <span class="note"># Home, Detail, Season, Episode</span></div>
+<div class="tree-item">│   ├── <span class="imp">admin.py</span>         <span class="note"># Admin inlines cho cast, episodes</span></div>
+<div class="tree-item">│   └── <span class="dir">templates/films/</span></div>
+<div class="tree-item">│       ├── <span class="file">home.html</span></div>
+<div class="tree-item">│       └── <span class="file">detail.html</span>      <span class="note"># Trang phim + player</span></div>
+<div class="tree-item">│</div>
+<div class="tree-item">├── <span class="dir">video_processor/</span></div>
+<div class="tree-item">│   ├── <span class="imp">processor.py</span>      <span class="note"># FFmpeg encode → HLS</span></div>
+<div class="tree-item">│   └── <span class="dir">raw_videos/</span>       <span class="note"># Drop .mp4 vào đây</span></div>
+<div class="tree-item">│</div>
+<div class="tree-item">├── <span class="dir">media/</span>             <span class="note"># MEDIA_ROOT</span></div>
+<div class="tree-item">│   ├── <span class="dir">hls_streams/</span>     <span class="note"># {id}/output.m3u8</span></div>
+<div class="tree-item">│   ├── <span class="dir">posters/</span></div>
+<div class="tree-item">│   └── <span class="dir">subs/</span>            <span class="note"># {id}/{lang}.vtt</span> <span class="new-tag">★ MỚI</span></div>
+<div class="tree-item">│</div>
+<div class="tree-item">├── <span class="imp">manage.py</span></div>
+<div class="tree-item">├── <span class="imp">.env</span>               <span class="note"># Secrets - KHÔNG commit!</span></div>
+<div class="tree-item">└── <span class="imp">requirements.txt</span></div>
+<div class="tree-item">│</div>
+<div class="tree-item">└── <span class="dir">C:\Caddy\</span></div>
+<div class="tree-item">    ├── <span class="imp">caddy.exe</span></div>
+<div class="tree-item">    └── <span class="imp">Caddyfile</span></div>
     </div>
   </div>
+</div>
 
-  <!-- PHASE 1 -->
-  <div class="phase" id="p1">
-    <div class="phase-header">
-      <div class="phase-num">PHASE 1</div>
-      <h2>Thiết Lập Hệ Sinh Thái Windows</h2>
-      <div class="phase-week">Tuần 1</div>
+<!-- ═══════════════════════════════════════════════
+     PHASE 1 — MÔI TRƯỜNG
+════════════════════════════════════════════════════ -->
+<div class="section" id="p1">
+  <div class="section-header">
+    <div class="section-num">PHASE 1</div>
+    <h2>Thiết Lập Hệ Sinh Thái Windows</h2>
+    <div class="section-week">Tuần 1</div>
+  </div>
+
+  <div class="step open">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🐘</div>
+      <div class="step-name">1.1 — Cài đặt PostgreSQL</div>
+      <div class="step-toggle">▼</div>
     </div>
-
-    <div class="step open">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">🐘</div>
-        <div class="step-name">1.1 — Cài đặt PostgreSQL</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <p>Tải bản installer mới nhất từ <strong>postgresql.org/download/windows</strong>. Trong quá trình cài, nhớ các thông tin sau:</p>
-        <table>
-          <tr><th>Tham số</th><th>Giá trị đề xuất</th><th>Ghi chú</th></tr>
-          <tr><td>Port</td><td>5432</td><td>Mặc định, giữ nguyên</td></tr>
-          <tr><td>Superuser</td><td>postgres</td><td>Mặc định</td></tr>
-          <tr><td>Password</td><td>Đặt mật khẩu mạnh</td><td>Ghi nhớ! Sẽ dùng trong settings.py</td></tr>
-          <tr><td>Locale</td><td>Vietnamese, Vietnam</td><td>Hoặc Default</td></tr>
-        </table>
-        <p>Sau khi cài xong, mở <strong>pgAdmin 4</strong> để tạo database:</p>
-        <div class="code-block">
-          <div class="code-label"><span>SQL — pgAdmin Query Tool</span></div>
-          <pre><span class="c-comment">-- Tạo user riêng cho project (tốt hơn dùng postgres superuser)</span>
-<span class="c-key">CREATE USER</span> movie_user <span class="c-key">WITH PASSWORD</span> <span class="c-str">'your_strong_password_here'</span>;
+    <div class="step-body">
+      <p>Tải bản mới nhất từ <strong>postgresql.org/download/windows</strong>. Trong quá trình cài:</p>
+      <div class="table-wrap"><table>
+        <tr><th>Tham số</th><th>Giá trị đề xuất</th><th>Ghi chú</th></tr>
+        <tr><td>Port</td><td>5432</td><td>Mặc định, giữ nguyên</td></tr>
+        <tr><td>Superuser</td><td>postgres</td><td>Mặc định</td></tr>
+        <tr><td>Password</td><td>Mật khẩu mạnh ≥12 ký tự</td><td>Lưu kỹ — dùng trong .env</td></tr>
+        <tr><td>Locale</td><td>Default</td><td>Hoặc Vietnamese, Vietnam</td></tr>
+      </table></div>
+      <p>Sau khi cài, mở <strong>pgAdmin 4</strong> tạo database:</p>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">SQL — pgAdmin Query Tool</span></div>
+        <pre><span class="c-comment">-- Tạo user riêng (nguyên tắc least privilege)</span>
+<span class="c-key">CREATE USER</span> film_user <span class="c-key">WITH PASSWORD</span> <span class="c-str">'strong_password_here'</span>;
 
 <span class="c-comment">-- Tạo database</span>
-<span class="c-key">CREATE DATABASE</span> movie_db
-    <span class="c-key">WITH OWNER</span> movie_user
+<span class="c-key">CREATE DATABASE</span> filmsite_db
+    <span class="c-key">WITH OWNER</span> film_user
     <span class="c-key">ENCODING</span> <span class="c-str">'UTF8'</span>
     <span class="c-key">LC_COLLATE</span> <span class="c-str">'en_US.UTF-8'</span>
     <span class="c-key">TEMPLATE</span> template0;
 
-<span class="c-comment">-- Cấp quyền</span>
-<span class="c-key">GRANT ALL PRIVILEGES ON DATABASE</span> movie_db <span class="c-key">TO</span> movie_user;</pre>
-        </div>
-        <div class="explain"><strong>Tại sao tạo user riêng?</strong> Nguyên tắc "least privilege" — user movie_user chỉ có quyền trên movie_db, không động được các database khác. Nếu credentials bị lộ, thiệt hại được giới hạn.</div>
+<span class="c-key">GRANT ALL PRIVILEGES ON DATABASE</span> filmsite_db <span class="c-key">TO</span> film_user;</pre>
       </div>
+      <div class="box info"><strong>Tại sao tạo user riêng?</strong> Nguyên tắc "least privilege" — film_user chỉ có quyền trên filmsite_db. Nếu credentials bị lộ, thiệt hại được giới hạn tối đa.</div>
     </div>
+  </div>
 
-    <div class="step">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">🎬</div>
-        <div class="step-name">1.2 — Cài đặt FFmpeg</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <p>Tải bản <strong>ffmpeg-release-essentials.zip</strong> từ <strong>gyan.dev/ffmpeg/builds</strong> (bản Windows đầy đủ codec).</p>
-        <div class="code-block">
-          <div class="code-label"><span>PowerShell — Kiểm tra cài đặt</span></div>
-          <pre><span class="c-comment"># Giải nén vào C:\ffmpeg</span>
-<span class="c-comment"># Thêm C:\ffmpeg\bin vào Path thông qua:</span>
-<span class="c-comment"># System Properties → Environment Variables → System Variables → Path → Edit → New</span>
+  <div class="step">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🎬</div>
+      <div class="step-name">1.2 — Cài đặt FFmpeg</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <p>Tải <strong>ffmpeg-release-essentials.zip</strong> từ <strong>gyan.dev/ffmpeg/builds</strong>.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">PowerShell</span></div>
+        <pre><span class="c-comment"># Giải nén vào C:\ffmpeg</span>
+<span class="c-comment"># Thêm C:\ffmpeg\bin vào Path:</span>
+<span class="c-comment"># System Properties → Env Variables → Path → New → C:\ffmpeg\bin</span>
 
-<span class="c-comment"># Mở cửa sổ CMD/PowerShell MỚI (cần thiết để Path có hiệu lực)</span>
+<span class="c-comment"># Mở cửa sổ CMD MỚI rồi kiểm tra:</span>
 <span class="c-cmd">ffmpeg</span> <span class="c-flag">-version</span>
-<span class="c-comment"># Kết quả mong muốn: ffmpeg version 7.x.x ...</span>
-
-<span class="c-cmd">ffprobe</span> <span class="c-flag">-version</span>
-<span class="c-comment"># ffprobe cũng cần hoạt động — dùng để đọc thông tin video</span></pre>
-        </div>
-        <div class="warn-box"><strong>⚠ Lưu ý:</strong> Phải mở cửa sổ CMD/PowerShell MỚI sau khi thay đổi biến môi trường. Cửa sổ cũ không nhận thay đổi.</div>
+<span class="c-cmd">ffprobe</span> <span class="c-flag">-version</span>   <span class="c-comment"># Cần cho get_video_duration()</span></pre>
       </div>
+      <div class="box warn"><strong>Quan trọng:</strong> Phải mở cửa sổ CMD/PowerShell MỚI sau khi đổi biến môi trường. Cửa sổ cũ không nhận thay đổi.</div>
     </div>
+  </div>
 
-    <div class="step">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">🌐</div>
-        <div class="step-name">1.3 — Cài đặt Caddy Web Server</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <p>Tải <strong>caddy_windows_amd64.exe</strong> từ <strong>caddyserver.com/download</strong>, đặt vào <code>C:\Caddy\</code> và đổi tên thành <code>caddy.exe</code>.</p>
-        <div class="code-block">
-          <div class="code-label"><span>CMD — Kiểm tra</span></div>
-          <pre><span class="c-cmd">C:\Caddy\caddy.exe</span> version
-<span class="c-comment"># v2.x.x ...</span></pre>
-        </div>
-        <div class="explain"><strong>Tại sao dùng Caddy thay vì Nginx?</strong> Caddy tự động quản lý HTTPS (nếu cần sau này), cú pháp Caddyfile đơn giản hơn nhiều so với Nginx config, và không cần cài thêm gì. Với mạng LAN, đây là lựa chọn tối ưu.</div>
-      </div>
+  <div class="step">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🌐</div>
+      <div class="step-name">1.3 — Cài đặt Caddy</div>
+      <div class="step-toggle">▼</div>
     </div>
+    <div class="step-body">
+      <p>Tải <strong>caddy_windows_amd64.exe</strong> từ <strong>caddyserver.com/download</strong>, đặt vào <code>C:\Caddy\caddy.exe</code>.</p>
+      <div class="box info"><strong>Tại sao dùng Caddy thay Nginx?</strong> Cú pháp Caddyfile đơn giản hơn nhiều, không cần cài thêm gì, tự quản lý HTTPS nếu cần sau này. Với mạng LAN, đây là lựa chọn tối ưu cho người mới.</div>
+    </div>
+  </div>
 
-    <div class="step">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">🐍</div>
-        <div class="step-name">1.4 — Môi trường Python & Dependencies</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <p>Sử dụng Python 3.11+ (khuyến nghị). Tạo virtual environment trong thư mục project:</p>
-        <div class="code-block">
-          <div class="code-label"><span>CMD — Cài đặt dependencies</span></div>
-          <pre><span class="c-comment"># Tạo và kích hoạt môi trường ảo</span>
+  <div class="step">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🐍</div>
+      <div class="step-name">1.4 — Python Virtual Environment & Dependencies</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">CMD</span></div>
+        <pre><span class="c-comment"># Python 3.11+ khuyến nghị</span>
 python <span class="c-flag">-m venv</span> venv
 venv\Scripts\activate
 
-<span class="c-comment"># Cài đặt dependencies — ĐẦY ĐỦ hơn plan gốc</span>
-pip install <span class="c-str">django</span>              <span class="c-comment"># Web framework</span>
-pip install <span class="c-str">psycopg2-binary</span>     <span class="c-comment"># PostgreSQL driver</span>
-pip install <span class="c-str">waitress</span>            <span class="c-comment"># Production WSGI server</span>
-pip install <span class="c-str">python-decouple</span>     <span class="c-comment">★ MỚI: đọc .env file an toàn</span>
-pip install <span class="c-str">Pillow</span>              <span class="c-comment">★ MỚI: xử lý ảnh poster</span>
-pip install <span class="c-str">requests</span>            <span class="c-comment">★ MỚI: crawler gọi API</span>
+pip install django               <span class="c-comment"># Web framework</span>
+pip install psycopg2-binary      <span class="c-comment"># PostgreSQL driver</span>
+pip install waitress             <span class="c-comment"># Production WSGI server</span>
+pip install python-decouple      <span class="c-comment"># Đọc .env file</span>
+pip install Pillow               <span class="c-comment"># Xử lý ảnh (nếu dùng ImageField)</span>
+pip install requests             <span class="c-comment"># Crawler gọi API</span>
+pip install djangorestframework  <span class="c-comment"># REST API (tùy chọn)</span>
+pip install django-filter        <span class="c-comment"># Filter cho API</span>
 
-<span class="c-comment"># Xuất danh sách dependencies để tái tạo sau này</span>
-pip freeze <span class="c-flag">&gt;</span> requirements.txt</pre>
-        </div>
-
-        <p class="section-heading">File .env — Lưu Secrets An Toàn</p>
-        <div class="code-block">
-          <div class="code-label"><span>.env — KHÔNG commit file này lên Git</span></div>
-          <pre><span class="c-comment"># Tạo file .env ở thư mục gốc project</span>
-SECRET_KEY=<span class="c-str">django-insecure-thay-bang-key-dai-random-cua-ban-tai-day</span>
+pip freeze > requirements.txt</pre>
+      </div>
+      <p class="sh">File .env</p>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">.env — KHÔNG commit lên Git</span></div>
+        <pre>SECRET_KEY=<span class="c-str">django-insecure-thay-bang-key-dai-random-60-ky-tu</span>
 DEBUG=<span class="c-num">False</span>
-DB_NAME=<span class="c-str">movie_db</span>
-DB_USER=<span class="c-str">movie_user</span>
-DB_PASSWORD=<span class="c-str">your_strong_password_here</span>
+DB_NAME=<span class="c-str">filmsite_db</span>
+DB_USER=<span class="c-str">film_user</span>
+DB_PASSWORD=<span class="c-str">strong_password_here</span>
 DB_HOST=<span class="c-str">localhost</span>
 DB_PORT=<span class="c-num">5432</span>
 ALLOWED_HOSTS=<span class="c-str">localhost,127.0.0.1,192.168.1.x</span></pre>
-        </div>
-        <div class="code-block">
-          <div class="code-label"><span>.gitignore — Bảo vệ secrets</span></div>
-          <pre><span class="c-str">.env</span>
-venv/
-<span class="c-str">__pycache__</span>/
-<span class="c-str">*.pyc</span>
-media/
-<span class="c-str">*.log</span>
-db.sqlite3</pre>
-        </div>
-        <div class="warn-box"><strong>⚠ Cực kỳ quan trọng:</strong> Không bao giờ hardcode SECRET_KEY hoặc mật khẩu database trực tiếp vào settings.py. Nếu lỡ push lên GitHub, coi như toàn bộ bảo mật đã mất.</div>
+      </div>
+      <div class="box warn"><strong>Cực kỳ quan trọng:</strong> Không bao giờ hardcode SECRET_KEY hay mật khẩu vào settings.py. Nếu lỡ push lên GitHub, coi như toàn bộ bảo mật đã mất.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PHASE 2 — BACKEND
+════════════════════════════════════════════════════ -->
+<div class="section" id="p2">
+  <div class="section-header">
+    <div class="section-num">PHASE 2</div>
+    <h2>Backend Django — Models & Settings</h2>
+    <div class="section-week">Tuần 2</div>
+  </div>
+
+  <div class="step open">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🚀</div>
+      <div class="step-name">2.1 — Khởi tạo Project & App</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">CMD</span></div>
+        <pre>django-admin startproject config .
+python manage.py startapp films   <span class="c-comment"># App chính — tên 'films' thay vì 'movies'</span></pre>
       </div>
     </div>
   </div>
 
-  <!-- PHASE 2 -->
-  <div class="phase" id="p2">
-    <div class="phase-header">
-      <div class="phase-num">PHASE 2</div>
-      <h2>Xây Dựng Lõi Backend Django</h2>
-      <div class="phase-week">Tuần 2</div>
+  <div class="step open">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">⚙️</div>
+      <div class="step-name">2.2 — settings.py Hoàn Chỉnh & Bảo Mật</div>
+      <div class="step-toggle">▼</div>
     </div>
-
-    <div class="step open">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">🚀</div>
-        <div class="step-name">2.1 — Khởi tạo Project & App</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <div class="code-block">
-          <div class="code-label"><span>CMD</span></div>
-          <pre><span class="c-comment"># Khởi tạo Django project</span>
-django-admin startproject core .
-
-<span class="c-comment"># Tạo app movies</span>
-python manage.py startapp movies
-
-<span class="c-comment"># Thêm 'movies' vào INSTALLED_APPS trong settings.py</span></pre>
-        </div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">⚙️</div>
-        <div class="step-name">2.2 — settings.py Hoàn Chỉnh & Bảo Mật</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <div class="code-block">
-          <div class="code-label"><span>core/settings.py</span></div>
-          <pre><span class="c-key">from</span> decouple <span class="c-key">import</span> config
-<span class="c-key">import</span> os
+    <div class="step-body">
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">config/settings.py</span></div>
+        <pre><span class="c-key">from</span> decouple <span class="c-key">import</span> config
 <span class="c-key">from</span> pathlib <span class="c-key">import</span> Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-<span class="c-comment"># ─── BẢO MẬT ─────────────────────────────────────</span>
-SECRET_KEY = config(<span class="c-str">'SECRET_KEY'</span>)        <span class="c-comment"># Đọc từ .env</span>
-DEBUG      = config(<span class="c-str">'DEBUG'</span>, cast=bool)    <span class="c-comment"># False trên production</span>
+SECRET_KEY    = config(<span class="c-str">'SECRET_KEY'</span>)
+DEBUG         = config(<span class="c-str">'DEBUG'</span>, cast=bool, default=False)
 ALLOWED_HOSTS = config(<span class="c-str">'ALLOWED_HOSTS'</span>).split(<span class="c-str">','</span>)
 
-<span class="c-comment"># ─── INSTALLED APPS ───────────────────────────────</span>
 INSTALLED_APPS = [
     <span class="c-str">'django.contrib.admin'</span>,
     <span class="c-str">'django.contrib.auth'</span>,
@@ -638,10 +1187,11 @@ INSTALLED_APPS = [
     <span class="c-str">'django.contrib.sessions'</span>,
     <span class="c-str">'django.contrib.messages'</span>,
     <span class="c-str">'django.contrib.staticfiles'</span>,
-    <span class="c-str">'movies'</span>,                            <span class="c-comment"># App của chúng ta</span>
+    <span class="c-str">'rest_framework'</span>,    <span class="c-comment"># REST API (tùy chọn)</span>
+    <span class="c-str">'django_filters'</span>,
+    <span class="c-str">'films'</span>,             <span class="c-comment"># App chính</span>
 ]
 
-<span class="c-comment"># ─── DATABASE ─────────────────────────────────────</span>
 DATABASES = {
     <span class="c-str">'default'</span>: {
         <span class="c-str">'ENGINE'</span>  : <span class="c-str">'django.db.backends.postgresql'</span>,
@@ -650,712 +1200,850 @@ DATABASES = {
         <span class="c-str">'PASSWORD'</span>: config(<span class="c-str">'DB_PASSWORD'</span>),
         <span class="c-str">'HOST'</span>    : config(<span class="c-str">'DB_HOST'</span>, default=<span class="c-str">'localhost'</span>),
         <span class="c-str">'PORT'</span>    : config(<span class="c-str">'DB_PORT'</span>, default=<span class="c-str">'5432'</span>),
-        <span class="c-str">'OPTIONS'</span> : {
-            <span class="c-str">'connect_timeout'</span>: <span class="c-num">10</span>,  <span class="c-comment"># Timeout kết nối 10 giây</span>
-        },
+        <span class="c-str">'OPTIONS'</span> : { <span class="c-str">'connect_timeout'</span>: <span class="c-num">10</span> },
     }
 }
 
-<span class="c-comment"># ─── FILES ────────────────────────────────────────</span>
 STATIC_URL  = <span class="c-str">'/static/'</span>
-STATIC_ROOT = BASE_DIR / <span class="c-str">'static'</span>       <span class="c-comment"># Sau collectstatic</span>
-
+STATIC_ROOT = BASE_DIR / <span class="c-str">'static'</span>
 MEDIA_URL   = <span class="c-str">'/media/'</span>
-MEDIA_ROOT  = BASE_DIR / <span class="c-str">'media'</span>        <span class="c-comment"># Chứa HLS streams, poster</span>
+MEDIA_ROOT  = BASE_DIR / <span class="c-str">'media'</span>
 
-<span class="c-comment"># ─── LOGGING ★ MỚI ───────────────────────────────</span>
+LANGUAGE_CODE = <span class="c-str">'vi'</span>
+TIME_ZONE     = <span class="c-str">'Asia/Ho_Chi_Minh'</span>
+
 LOGGING = {
     <span class="c-str">'version'</span>: <span class="c-num">1</span>,
     <span class="c-str">'disable_existing_loggers'</span>: <span class="c-num">False</span>,
-    <span class="c-str">'formatters'</span>: {
-        <span class="c-str">'verbose'</span>: {
-            <span class="c-str">'format'</span>: <span class="c-str">'{asctime} [{levelname}] {module}: {message}'</span>,
-            <span class="c-str">'style'</span>: <span class="c-str">'{'</span>,
-        },
-    },
-    <span class="c-str">'handlers'</span>: {
-        <span class="c-str">'file'</span>: {
-            <span class="c-str">'level'</span>  : <span class="c-str">'WARNING'</span>,
-            <span class="c-str">'class'</span>  : <span class="c-str">'logging.handlers.RotatingFileHandler'</span>,
-            <span class="c-str">'filename'</span>: BASE_DIR / <span class="c-str">'logs/django.log'</span>,
-            <span class="c-str">'maxBytes'</span>: <span class="c-num">5</span> * <span class="c-num">1024</span> * <span class="c-num">1024</span>,    <span class="c-comment"># 5 MB</span>
-            <span class="c-str">'backupCount'</span>: <span class="c-num">3</span>,
-            <span class="c-str">'formatter'</span>: <span class="c-str">'verbose'</span>,
-        },
-    },
-    <span class="c-str">'root'</span>: {
-        <span class="c-str">'handlers'</span>: [<span class="c-str">'file'</span>],
-        <span class="c-str">'level'</span>: <span class="c-str">'WARNING'</span>,
-    },
+    <span class="c-str">'formatters'</span>: { <span class="c-str">'verbose'</span>: { <span class="c-str">'format'</span>: <span class="c-str">'{asctime} [{levelname}] {module}: {message}'</span>, <span class="c-str">'style'</span>: <span class="c-str">'{'</span> } },
+    <span class="c-str">'handlers'</span>: { <span class="c-str">'file'</span>: {
+        <span class="c-str">'class'</span>: <span class="c-str">'logging.handlers.RotatingFileHandler'</span>,
+        <span class="c-str">'filename'</span>: BASE_DIR / <span class="c-str">'logs/django.log'</span>,
+        <span class="c-str">'maxBytes'</span>: <span class="c-num">5</span> * <span class="c-num">1024</span> * <span class="c-num">1024</span>, <span class="c-str">'backupCount'</span>: <span class="c-num">3</span>,
+        <span class="c-str">'formatter'</span>: <span class="c-str">'verbose'</span> } },
+    <span class="c-str">'root'</span>: { <span class="c-str">'handlers'</span>: [<span class="c-str">'file'</span>], <span class="c-str">'level'</span>: <span class="c-str">'WARNING'</span> }
 }</pre>
-        </div>
-        <div class="explain"><strong>Tại sao cần Logging?</strong> Khi hệ thống chạy không có cửa sổ terminal mở, log file là cách duy nhất để biết có lỗi gì xảy ra. RotatingFileHandler tự xoay vòng file log để không chiếm quá nhiều dung lượng ổ đĩa.</div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">🗃️</div>
-        <div class="step-name">2.3 — Django Models Chi Tiết</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <div class="code-block">
-          <div class="code-label"><span>movies/models.py</span></div>
-          <pre><span class="c-key">from</span> django.db <span class="c-key">import</span> models
-<span class="c-key">from</span> django.utils <span class="c-key">import</span> timezone
-
-<span class="c-key">class</span> <span class="c-fn">Genre</span>(models.Model):
-    name = models.CharField(max_length=<span class="c-num">50</span>, unique=<span class="c-num">True</span>)
-
-    <span class="c-key">def</span> <span class="c-fn">__str__</span>(self):
-        <span class="c-key">return</span> self.name
-
-
-<span class="c-key">class</span> <span class="c-fn">Movie</span>(models.Model):
-    <span class="c-comment"># ─── Thông tin cơ bản ─────────────────────────</span>
-    title        = models.CharField(max_length=<span class="c-num">255</span>)
-    title_en     = models.CharField(max_length=<span class="c-num">255</span>, blank=<span class="c-num">True</span>)
-    slug         = models.SlugField(max_length=<span class="c-num">255</span>, unique=<span class="c-num">True</span>)
-    description  = models.TextField(blank=<span class="c-num">True</span>)
-    poster       = models.ImageField(
-                     upload_to=<span class="c-str">'posters/'</span>,     <span class="c-comment"># → media/posters/</span>
-                     null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
-    genres       = models.ManyToManyField(Genre, blank=<span class="c-num">True</span>)
-
-    <span class="c-comment"># ─── Metadata từ API/crawler ──────────────────</span>
-    release_year = models.PositiveSmallIntegerField(null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
-    rating       = models.DecimalField(
-                     max_digits=<span class="c-num">4</span>, decimal_places=<span class="c-num">2</span>,
-                     null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)    <span class="c-comment"># 0.00 – 10.00</span>
-    total_episodes = models.PositiveSmallIntegerField(default=<span class="c-num">1</span>)
-
-    <span class="c-comment"># ─── Trạng thái ───────────────────────────────</span>
-    STATUS_CHOICES = [
-        (<span class="c-str">'ongoing'</span>,   <span class="c-str">'Đang chiếu'</span>),
-        (<span class="c-str">'completed'</span>, <span class="c-str">'Hoàn thành'</span>),
-        (<span class="c-str">'upcoming'</span>,  <span class="c-str">'Sắp chiếu'</span>),
-    ]
-    status     = models.CharField(max_length=<span class="c-num">20</span>,
-                   choices=STATUS_CHOICES, default=<span class="c-str">'completed'</span>)
-    is_visible = models.BooleanField(default=<span class="c-num">True</span>)  <span class="c-comment"># Ẩn/hiện trên trang</span>
-
-    <span class="c-comment"># ─── Timestamp ────────────────────────────────</span>
-    created_at = models.DateTimeField(auto_now_add=<span class="c-num">True</span>)
-    updated_at = models.DateTimeField(auto_now=<span class="c-num">True</span>)
-
-    <span class="c-key">class</span> <span class="c-fn">Meta</span>:
-        ordering = [<span class="c-str">'-created_at'</span>]
-        indexes  = [models.Index(fields=[<span class="c-str">'slug'</span>]),
-                    models.Index(fields=[<span class="c-str">'status'</span>])]
-
-    <span class="c-key">def</span> <span class="c-fn">__str__</span>(self):
-        <span class="c-key">return</span> self.title
-
-
-<span class="c-key">class</span> <span class="c-fn">Episode</span>(models.Model):
-    movie       = models.ForeignKey(
-                    Movie, on_delete=models.CASCADE,
-                    related_name=<span class="c-str">'episodes'</span>)
-    episode_num = models.PositiveSmallIntegerField()     <span class="c-comment"># Số tập</span>
-    title       = models.CharField(max_length=<span class="c-num">255</span>, blank=<span class="c-num">True</span>)
-    duration    = models.PositiveIntegerField(
-                    null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)     <span class="c-comment"># Đơn vị: giây</span>
-
-    <span class="c-comment"># Đường dẫn relative từ MEDIA_ROOT, ví dụ:</span>
-    <span class="c-comment"># hls_streams/ten_phim/tap_1/output.m3u8</span>
-    video_url   = models.CharField(max_length=<span class="c-num">512</span>)
-
-    <span class="c-comment"># Trạng thái xử lý video</span>
-    STATUS = [
-        (<span class="c-str">'pending'</span>,    <span class="c-str">'Chờ xử lý'</span>),
-        (<span class="c-str">'processing'</span>, <span class="c-str">'Đang xử lý'</span>),
-        (<span class="c-str">'ready'</span>,      <span class="c-str">'Sẵn sàng'</span>),
-        (<span class="c-str">'error'</span>,      <span class="c-str">'Lỗi'</span>),
-    ]
-    status      = models.CharField(max_length=<span class="c-num">20</span>,
-                    choices=STATUS, default=<span class="c-str">'pending'</span>)
-    created_at  = models.DateTimeField(auto_now_add=<span class="c-num">True</span>)
-
-    <span class="c-key">class</span> <span class="c-fn">Meta</span>:
-        ordering            = [<span class="c-str">'episode_num'</span>]
-        unique_together     = [(<span class="c-str">'movie'</span>, <span class="c-str">'episode_num'</span>)]
-
-    <span class="c-key">def</span> <span class="c-fn">__str__</span>(self):
-        <span class="c-key">return</span> <span class="c-str">f"{self.movie.title} — Tập {self.episode_num}"</span></pre>
-        </div>
-        <div class="code-block">
-          <div class="code-label"><span>CMD — Tạo và áp dụng migrations</span></div>
-          <pre>python manage.py makemigrations movies
-python manage.py migrate
-python manage.py createsuperuser     <span class="c-comment"># Tài khoản vào /admin</span></pre>
-        </div>
-        <div class="explain"><strong>Tại sao cần trường <code>status</code> trong Episode?</strong> Khi script đang encode video bằng FFmpeg, tập phim đó ở trạng thái "processing" và sẽ không hiển thị trên trang. Sau khi hoàn thành, chuyển sang "ready". Điều này ngăn người dùng bấm vào link video chưa tồn tại.</div>
       </div>
     </div>
   </div>
 
-  <!-- PHASE 3 -->
-  <div class="phase" id="p3">
-    <div class="phase-header">
-      <div class="phase-num">PHASE 3</div>
-      <h2>Hệ Thống Tự Động Hóa HLS</h2>
-      <div class="phase-week">Tuần 3</div>
+  <div class="step open">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🗃️</div>
+      <div class="step-name">2.3 — films/models.py — 14 Models Đầy Đủ <span class="new-badge">UPDATED</span></div>
+      <div class="step-toggle">▼</div>
     </div>
+    <div class="step-body">
+      <div class="box danger"><strong>Đây là phần thay đổi lớn nhất so với kế hoạch gốc.</strong> Models được xây dựng theo design.md — 14 bảng thay vì 3. Xem phần "Tại sao DB khác?" ở đầu tài liệu để hiểu lý do.</div>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">films/models.py — Phần 1: ENUMs</span></div>
+        <pre><span class="c-key">from</span> django.db <span class="c-key">import</span> models
+<span class="c-key">from</span> django.utils.text <span class="c-key">import</span> slugify
 
-    <div class="step open">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">🔧</div>
-        <div class="step-name">3.1 — Giải Thích Chi Tiết Lệnh FFmpeg</div>
-        <div class="step-toggle">▼</div>
+
+<span class="c-key">class</span> <span class="c-cls">MediumType</span>(models.TextChoices):
+    MOVIE       = <span class="c-str">'Movie'</span>,       <span class="c-str">'Phim lẻ'</span>
+    SERIES      = <span class="c-str">'Series'</span>,      <span class="c-str">'Phim bộ'</span>
+    ANIME       = <span class="c-str">'Anime'</span>,       <span class="c-str">'Anime series'</span>
+    ANIME_MOVIE = <span class="c-str">'Anime Movie'</span>, <span class="c-str">'Anime Movie'</span>
+    OVA         = <span class="c-str">'OVA'</span>,         <span class="c-str">'OVA'</span>
+    SPECIAL     = <span class="c-str">'Special'</span>,     <span class="c-str">'Special'</span>
+    DOCUMENTARY = <span class="c-str">'Documentary'</span>, <span class="c-str">'Tài liệu'</span>
+    SHORT_FILM  = <span class="c-str">'Short Film'</span>,  <span class="c-str">'Phim ngắn'</span>
+    MINI_SERIES = <span class="c-str">'Mini-Series'</span>, <span class="c-str">'Mini-Series'</span>
+    TV_MOVIE    = <span class="c-str">'TV Movie'</span>,    <span class="c-str">'TV Movie'</span>
+
+
+<span class="c-key">class</span> <span class="c-cls">MovieStatus</span>(models.TextChoices):
+    ONGOING     = <span class="c-str">'Ongoing'</span>,     <span class="c-str">'Đang chiếu'</span>
+    COMPLETED   = <span class="c-str">'Completed'</span>,   <span class="c-str">'Hoàn thành'</span>
+    COMING_SOON = <span class="c-str">'Coming Soon'</span>, <span class="c-str">'Sắp chiếu'</span>
+    HIATUS      = <span class="c-str">'Hiatus'</span>,      <span class="c-str">'Tạm dừng'</span>
+    CANCELLED   = <span class="c-str">'Cancelled'</span>,   <span class="c-str">'Đã hủy'</span>
+    ANNOUNCED   = <span class="c-str">'Announced'</span>,   <span class="c-str">'Mới công bố'</span>
+
+
+<span class="c-key">class</span> <span class="c-cls">CastCrewRole</span>(models.TextChoices):
+    DIRECTOR        = <span class="c-str">'Director'</span>
+    CAST            = <span class="c-str">'Cast'</span>
+    SCREENWRITER    = <span class="c-str">'Screenwriter'</span>
+    PRODUCER        = <span class="c-str">'Producer'</span>
+    EXEC_PRODUCER   = <span class="c-str">'Executive Producer'</span>
+    CINEMATOGRAPHER = <span class="c-str">'Cinematographer'</span>
+    COMPOSER        = <span class="c-str">'Composer'</span>
+    EDITOR          = <span class="c-str">'Editor'</span>
+    VOICE           = <span class="c-str">'Voice Actor'</span>
+    VFX             = <span class="c-str">'Visual Effects Supervisor'</span>
+
+
+<span class="c-key">class</span> <span class="c-cls">SubtitleFormat</span>(models.TextChoices):
+    VTT = <span class="c-str">'vtt'</span>, <span class="c-str">'WebVTT'</span>
+    SRT = <span class="c-str">'srt'</span>, <span class="c-str">'SubRip'</span>
+    ASS = <span class="c-str">'ass'</span>, <span class="c-str">'ASS'</span>
+
+
+<span class="c-key">class</span> <span class="c-cls">TrailerLabel</span>(models.TextChoices):
+    TEASER   = <span class="c-str">'Teaser'</span>
+    TRAILER  = <span class="c-str">'Trailer'</span>
+    OFFICIAL = <span class="c-str">'Official Trailer'</span>
+    FINAL    = <span class="c-str">'Final Trailer'</span>
+    CLIP     = <span class="c-str">'Clip'</span>
+    BTS      = <span class="c-str">'Behind the Scenes'</span>
+    OPENING  = <span class="c-str">'Opening'</span>
+    ENDING   = <span class="c-str">'Ending'</span></pre>
       </div>
-      <div class="step-body">
-        <div class="code-block">
-          <div class="code-label"><span>Shell — Lệnh FFmpeg đầy đủ với giải thích</span></div>
-          <pre>ffmpeg \
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">films/models.py — Phần 2: Lookup Tables</span></div>
+        <pre><span class="c-key">class</span> <span class="c-cls">Country</span>(models.Model):
+    <span class="c-str">"""ISO 3166-1 alpha-2: US, KR, JP, VN…"""</span>
+    country_code = models.CharField(max_length=<span class="c-num">2</span>, primary_key=<span class="c-num">True</span>)
+    country_name = models.CharField(max_length=<span class="c-num">100</span>)
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>: db_table = <span class="c-str">'countries'</span>
+    <span class="c-key">def</span> <span class="c-fn">__str__</span>(self): <span class="c-key">return</span> self.country_name
+
+
+<span class="c-key">class</span> <span class="c-cls">Genre</span>(models.Model):
+    genre_name  = models.CharField(max_length=<span class="c-num">100</span>, unique=<span class="c-num">True</span>)
+    slug        = models.SlugField(max_length=<span class="c-num">120</span>, unique=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
+    description = models.TextField(blank=<span class="c-num">True</span>)
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>: db_table = <span class="c-str">'genres'</span>
+    <span class="c-key">def</span> <span class="c-fn">save</span>(self, *args, **kwargs):
+        <span class="c-key">if not</span> self.slug: self.slug = slugify(self.genre_name)
+        super().save(*args, **kwargs)
+    <span class="c-key">def</span> <span class="c-fn">__str__</span>(self): <span class="c-key">return</span> self.genre_name
+
+
+<span class="c-key">class</span> <span class="c-cls">Tag</span>(models.Model):
+    tag_name = models.CharField(max_length=<span class="c-num">100</span>, unique=<span class="c-num">True</span>)
+    slug     = models.SlugField(max_length=<span class="c-num">120</span>, unique=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>: db_table = <span class="c-str">'tags'</span>
+    <span class="c-key">def</span> <span class="c-fn">__str__</span>(self): <span class="c-key">return</span> self.tag_name
+
+
+<span class="c-key">class</span> <span class="c-cls">Studio</span>(models.Model):
+    studio_name  = models.CharField(max_length=<span class="c-num">255</span>)
+    logo_path    = models.CharField(max_length=<span class="c-num">500</span>, blank=<span class="c-num">True</span>)
+    country_code = models.CharField(max_length=<span class="c-num">2</span>, blank=<span class="c-num">True</span>)
+    website      = models.URLField(blank=<span class="c-num">True</span>)
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>: db_table = <span class="c-str">'studios'</span>
+    <span class="c-key">def</span> <span class="c-fn">__str__</span>(self): <span class="c-key">return</span> self.studio_name
+
+
+<span class="c-key">class</span> <span class="c-cls">Person</span>(models.Model):
+    full_name     = models.CharField(max_length=<span class="c-num">255</span>)
+    original_name = models.CharField(max_length=<span class="c-num">255</span>, blank=<span class="c-num">True</span>)
+    slug          = models.SlugField(max_length=<span class="c-num">300</span>, unique=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
+    avatar_path   = models.CharField(max_length=<span class="c-num">500</span>, blank=<span class="c-num">True</span>)
+    bio           = models.TextField(blank=<span class="c-num">True</span>)
+    birth_date    = models.DateField(null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
+    nationality   = models.CharField(max_length=<span class="c-num">100</span>, blank=<span class="c-num">True</span>)
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>: db_table = <span class="c-str">'people'</span>
+    <span class="c-key">def</span> <span class="c-fn">save</span>(self, *args, **kwargs):
+        <span class="c-key">if not</span> self.slug: self.slug = slugify(self.full_name)
+        super().save(*args, **kwargs)
+    <span class="c-key">def</span> <span class="c-fn">__str__</span>(self): <span class="c-key">return</span> self.full_name</pre>
+      </div>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">films/models.py — Phần 3: Movie (bảng trung tâm)</span></div>
+        <pre><span class="c-key">class</span> <span class="c-cls">Movie</span>(models.Model):
+    <span class="c-comment"># ── Tên ──────────────────────────────────────────</span>
+    title             = models.CharField(max_length=<span class="c-num">255</span>)
+    original_title    = models.CharField(max_length=<span class="c-num">255</span>, blank=<span class="c-num">True</span>)
+    slug              = models.SlugField(max_length=<span class="c-num">300</span>, unique=<span class="c-num">True</span>)
+    short_description = models.CharField(max_length=<span class="c-num">500</span>, blank=<span class="c-num">True</span>)
+    description       = models.TextField(blank=<span class="c-num">True</span>)
+
+    <span class="c-comment"># ── Phát hành ─────────────────────────────────────</span>
+    release_year = models.IntegerField(null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
+    release_date = models.DateField(null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
+    end_year     = models.IntegerField(null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
+
+    <span class="c-comment"># ── Đánh giá ──────────────────────────────────────</span>
+    imdb_rating = models.DecimalField(max_digits=<span class="c-num">3</span>, decimal_places=<span class="c-num">1</span>, null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
+    imdb_id     = models.CharField(max_length=<span class="c-num">20</span>, unique=<span class="c-num">True</span>, null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
+    site_rating = models.DecimalField(max_digits=<span class="c-num">3</span>, decimal_places=<span class="c-num">1</span>, null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
+    site_votes  = models.IntegerField(default=<span class="c-num">0</span>)
+
+    <span class="c-comment"># ── Media paths (URL tương đối hoặc CDN URL) ──────</span>
+    poster_path    = models.CharField(max_length=<span class="c-num">500</span>, blank=<span class="c-num">True</span>,
+                       help_text=<span class="c-str">'/images/posters/{id}.webp — tỉ lệ 2:3'</span>)
+    thumbnail_path = models.CharField(max_length=<span class="c-num">500</span>, blank=<span class="c-num">True</span>,
+                       help_text=<span class="c-str">'/images/thumbs/{id}.webp — tỉ lệ 16:9'</span>)
+    backdrop_path  = models.CharField(max_length=<span class="c-num">500</span>, blank=<span class="c-num">True</span>,
+                       help_text=<span class="c-str">'/images/backdrops/{id}.webp — tỉ lệ 21:9'</span>)
+
+    <span class="c-comment"># ── Phân loại ─────────────────────────────────────</span>
+    medium_type       = models.CharField(max_length=<span class="c-num">20</span>, choices=<span class="c-cls">MediumType</span>.choices)
+    status            = models.CharField(max_length=<span class="c-num">20</span>, choices=<span class="c-cls">MovieStatus</span>.choices)
+    content_rating    = models.CharField(max_length=<span class="c-num">10</span>, blank=<span class="c-num">True</span>)
+    original_language = models.CharField(max_length=<span class="c-num">10</span>, blank=<span class="c-num">True</span>,
+                          help_text=<span class="c-str">'ISO 639-1: vi, en, ko, ja'</span>)
+
+    <span class="c-comment"># ── Series counters ───────────────────────────────</span>
+    total_episodes = models.IntegerField(null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
+    total_seasons  = models.IntegerField(default=<span class="c-num">1</span>)
+
+    <span class="c-comment"># ── Flags & Analytics ─────────────────────────────</span>
+    is_featured = models.BooleanField(default=<span class="c-num">False</span>)
+    is_hidden   = models.BooleanField(default=<span class="c-num">False</span>)
+    view_count  = models.BigIntegerField(default=<span class="c-num">0</span>)
+
+    <span class="c-comment"># ── Self-ref (OVA/Special liên kết về series cha) ─</span>
+    parent_movie = models.ForeignKey(<span class="c-str">'self'</span>, null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>,
+                     on_delete=models.SET_NULL, related_name=<span class="c-str">'children'</span>)
+
+    <span class="c-comment"># ── M2M relationships ─────────────────────────────</span>
+    genres    = models.ManyToManyField(<span class="c-cls">Genre</span>,   through=<span class="c-str">'MovieGenre'</span>,    blank=<span class="c-num">True</span>)
+    tags      = models.ManyToManyField(<span class="c-cls">Tag</span>,     through=<span class="c-str">'MovieTag'</span>,      blank=<span class="c-num">True</span>)
+    countries = models.ManyToManyField(<span class="c-cls">Country</span>, through=<span class="c-str">'MovieCountry'</span>,  blank=<span class="c-num">True</span>)
+    cast_crew = models.ManyToManyField(<span class="c-cls">Person</span>,  through=<span class="c-str">'MovieCastCrew'</span>, blank=<span class="c-num">True</span>)
+    studios   = models.ManyToManyField(<span class="c-cls">Studio</span>,  through=<span class="c-str">'MovieStudio'</span>,   blank=<span class="c-num">True</span>)
+
+    created_at = models.DateTimeField(auto_now_add=<span class="c-num">True</span>)
+    updated_at = models.DateTimeField(auto_now=<span class="c-num">True</span>)
+
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>:
+        db_table = <span class="c-str">'movies'</span>
+        ordering = [<span class="c-str">'-created_at'</span>]
+        indexes  = [
+            models.Index(fields=[<span class="c-str">'slug'</span>],                     name=<span class="c-str">'idx_movie_slug'</span>),
+            models.Index(fields=[<span class="c-str">'medium_type'</span>, <span class="c-str">'status'</span>],   name=<span class="c-str">'idx_movie_type'</span>),
+            models.Index(fields=[<span class="c-str">'release_year'</span>],             name=<span class="c-str">'idx_movie_year'</span>),
+            models.Index(fields=[<span class="c-str">'imdb_rating'</span>],              name=<span class="c-str">'idx_movie_imdb'</span>),
+            models.Index(fields=[<span class="c-str">'is_hidden'</span>, <span class="c-str">'is_featured'</span>], name=<span class="c-str">'idx_movie_flags'</span>),
+        ]
+
+    <span class="c-key">def</span> <span class="c-fn">save</span>(self, *args, **kwargs):
+        <span class="c-key">if not</span> self.slug:
+            base = <span class="c-str">f'{self.title}-{self.release_year}'</span> <span class="c-key">if</span> self.release_year <span class="c-key">else</span> self.title
+            self.slug = slugify(base)
+        super().save(*args, **kwargs)
+
+    <span class="c-key">def</span> <span class="c-fn">__str__</span>(self):
+        <span class="c-key">return</span> <span class="c-str">f'{self.title} ({self.release_year})'</span></pre>
+      </div>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">films/models.py — Phần 4: M2M, Episode, Subtitle, Trailer</span></div>
+        <pre><span class="c-comment"># ── M2M Through Tables ────────────────────────────</span>
+<span class="c-key">class</span> <span class="c-cls">MovieGenre</span>(models.Model):
+    movie = models.ForeignKey(<span class="c-cls">Movie</span>, on_delete=models.CASCADE)
+    genre = models.ForeignKey(<span class="c-cls">Genre</span>, on_delete=models.CASCADE)
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>: db_table = <span class="c-str">'movie_genres'</span>; unique_together = (<span class="c-str">'movie'</span>, <span class="c-str">'genre'</span>)
+
+<span class="c-key">class</span> <span class="c-cls">MovieTag</span>(models.Model):
+    movie = models.ForeignKey(<span class="c-cls">Movie</span>, on_delete=models.CASCADE)
+    tag   = models.ForeignKey(<span class="c-cls">Tag</span>,   on_delete=models.CASCADE)
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>: db_table = <span class="c-str">'movie_tags'</span>; unique_together = (<span class="c-str">'movie'</span>, <span class="c-str">'tag'</span>)
+
+<span class="c-key">class</span> <span class="c-cls">MovieCountry</span>(models.Model):
+    movie   = models.ForeignKey(<span class="c-cls">Movie</span>,   on_delete=models.CASCADE)
+    country = models.ForeignKey(<span class="c-cls">Country</span>, on_delete=models.CASCADE)
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>: db_table = <span class="c-str">'movie_countries'</span>; unique_together = (<span class="c-str">'movie'</span>, <span class="c-str">'country'</span>)
+
+<span class="c-key">class</span> <span class="c-cls">MovieCastCrew</span>(models.Model):
+    movie          = models.ForeignKey(<span class="c-cls">Movie</span>,  on_delete=models.CASCADE)
+    person         = models.ForeignKey(<span class="c-cls">Person</span>, on_delete=models.CASCADE)
+    role           = models.CharField(max_length=<span class="c-num">40</span>, choices=<span class="c-cls">CastCrewRole</span>.choices)
+    character_name = models.CharField(max_length=<span class="c-num">255</span>, blank=<span class="c-num">True</span>)
+    sort_order     = models.IntegerField(default=<span class="c-num">0</span>)
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>: db_table = <span class="c-str">'movie_cast_crew'</span>; ordering = [<span class="c-str">'sort_order'</span>]
+
+<span class="c-key">class</span> <span class="c-cls">MovieStudio</span>(models.Model):
+    movie  = models.ForeignKey(<span class="c-cls">Movie</span>,  on_delete=models.CASCADE)
+    studio = models.ForeignKey(<span class="c-cls">Studio</span>, on_delete=models.CASCADE)
+    role   = models.CharField(max_length=<span class="c-num">20</span>, default=<span class="c-str">'Production'</span>)
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>: db_table = <span class="c-str">'movie_studios'</span>; unique_together = (<span class="c-str">'movie'</span>, <span class="c-str">'studio'</span>)
+
+
+<span class="c-comment"># ── Episode ────────────────────────────────────────</span>
+<span class="c-key">class</span> <span class="c-cls">Episode</span>(models.Model):
+    <span class="c-str">"""
+    Phim lẻ   → 1 dòng, season_number=1, episode_number=1
+    Phim bộ   → nhiều dòng, season_number tăng theo mùa
+    """</span>
+    movie          = models.ForeignKey(<span class="c-cls">Movie</span>, on_delete=models.CASCADE, related_name=<span class="c-str">'episodes'</span>)
+    season_number  = models.IntegerField(default=<span class="c-num">1</span>)
+    episode_number = models.IntegerField()
+    episode_name   = models.CharField(max_length=<span class="c-num">255</span>, blank=<span class="c-num">True</span>)
+    description    = models.TextField(blank=<span class="c-num">True</span>)
+    m3u8_path      = models.CharField(max_length=<span class="c-num">500</span>, blank=<span class="c-num">True</span>,
+                       help_text=<span class="c-str">'HLS stream URL — ưu tiên'</span>)
+    movie_file_path= models.CharField(max_length=<span class="c-num">500</span>, blank=<span class="c-num">True</span>,
+                       help_text=<span class="c-str">'MP4 download link'</span>)
+    thumbnail_path = models.CharField(max_length=<span class="c-num">500</span>, blank=<span class="c-num">True</span>)
+    duration       = models.IntegerField(null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>,
+                       help_text=<span class="c-str">'Thời lượng (phút)'</span>)
+    air_date       = models.DateField(null=<span class="c-num">True</span>, blank=<span class="c-num">True</span>)
+    view_count     = models.BigIntegerField(default=<span class="c-num">0</span>)
+    is_free        = models.BooleanField(default=<span class="c-num">True</span>)
+    created_at     = models.DateTimeField(auto_now_add=<span class="c-num">True</span>)
+
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>:
+        db_table        = <span class="c-str">'episodes'</span>
+        ordering        = [<span class="c-str">'season_number'</span>, <span class="c-str">'episode_number'</span>]
+        unique_together = (<span class="c-str">'movie'</span>, <span class="c-str">'season_number'</span>, <span class="c-str">'episode_number'</span>)
+
+    <span class="c-key">def</span> <span class="c-fn">__str__</span>(self):
+        <span class="c-key">return</span> <span class="c-str">f'{self.movie.title} S{self.season_number:02d}E{self.episode_number:02d}'</span>
+
+
+<span class="c-comment"># ── Subtitle ───────────────────────────────────────</span>
+<span class="c-key">class</span> <span class="c-cls">Subtitle</span>(models.Model):
+    episode        = models.ForeignKey(<span class="c-cls">Episode</span>, on_delete=models.CASCADE, related_name=<span class="c-str">'subtitles'</span>)
+    language_code  = models.CharField(max_length=<span class="c-num">10</span>)   <span class="c-comment"># vi, en, ko, zh-hans…</span>
+    language_label = models.CharField(max_length=<span class="c-num">50</span>, blank=<span class="c-num">True</span>)  <span class="c-comment"># Vietsub, Engsub…</span>
+    sub_path       = models.CharField(max_length=<span class="c-num">500</span>)
+    format         = models.CharField(max_length=<span class="c-num">5</span>, choices=<span class="c-cls">SubtitleFormat</span>.choices, default=<span class="c-str">'vtt'</span>)
+    is_default     = models.BooleanField(default=<span class="c-num">False</span>)
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>: db_table = <span class="c-str">'subtitles'</span>
+    <span class="c-key">def</span> <span class="c-fn">__str__</span>(self): <span class="c-key">return</span> <span class="c-str">f'{self.episode} — {self.language_label}'</span>
+
+
+<span class="c-comment"># ── Trailer ────────────────────────────────────────</span>
+<span class="c-key">class</span> <span class="c-cls">Trailer</span>(models.Model):
+    movie        = models.ForeignKey(<span class="c-cls">Movie</span>, on_delete=models.CASCADE, related_name=<span class="c-str">'trailers'</span>)
+    trailer_path = models.CharField(max_length=<span class="c-num">500</span>)  <span class="c-comment"># https://youtu.be/… hoặc /media/trailers/…</span>
+    label        = models.CharField(max_length=<span class="c-num">25</span>, choices=<span class="c-cls">TrailerLabel</span>.choices, blank=<span class="c-num">True</span>)
+    language     = models.CharField(max_length=<span class="c-num">10</span>, blank=<span class="c-num">True</span>)
+    sort_order   = models.IntegerField(default=<span class="c-num">0</span>)
+    <span class="c-key">class</span> <span class="c-cls">Meta</span>: db_table = <span class="c-str">'trailers'</span>; ordering = [<span class="c-str">'sort_order'</span>]</pre>
+      </div>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">CMD — Tạo và áp dụng migrations</span></div>
+        <pre>python manage.py makemigrations films
+python manage.py migrate
+python manage.py createsuperuser</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PHASE 3 — VIDEO PIPELINE
+════════════════════════════════════════════════════ -->
+<div class="section" id="p3">
+  <div class="section-header">
+    <div class="section-num">PHASE 3</div>
+    <h2>Hệ Thống Tự Động Hóa HLS</h2>
+    <div class="section-week">Tuần 3</div>
+  </div>
+
+  <div class="step open">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🔧</div>
+      <div class="step-name">3.1 — Lệnh FFmpeg chi tiết</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">Shell — Lệnh FFmpeg giải thích từng flag</span></div>
+        <pre>ffmpeg \
   <span class="c-flag">-i</span> input.mp4 \                  <span class="c-comment"># File đầu vào</span>
-  <span class="c-flag">-c:v</span> libx264 \                  <span class="c-comment">★ MỚI: chỉ định codec video H.264</span>
-  <span class="c-flag">-profile:v</span> baseline \          <span class="c-comment"># Profile H.264 tương thích cao nhất</span>
-  <span class="c-flag">-level</span> 3.0 \                   <span class="c-comment"># Level 3.0 = max 720p@30fps — đủ cho LAN</span>
-  <span class="c-flag">-c:a</span> aac \                     <span class="c-comment">★ MỚI: codec audio AAC (tương thích HLS)</span>
-  <span class="c-flag">-b:a</span> 128k \                    <span class="c-comment">★ MỚI: bitrate audio 128kbps</span>
-  <span class="c-flag">-movflags</span> +faststart \        <span class="c-comment">★ MỚI: cho phép stream trước khi tải xong</span>
+  <span class="c-flag">-c:v</span> libx264 \                  <span class="c-comment"># Video codec: H.264</span>
+  <span class="c-flag">-profile:v</span> baseline \          <span class="c-comment"># Profile: tương thích tối đa</span>
+  <span class="c-flag">-level</span> 3.0 \                   <span class="c-comment"># Level 3.0 = max 720p@30fps</span>
+  <span class="c-flag">-c:a</span> aac \                     <span class="c-comment"># Audio codec: AAC (HLS chuẩn)</span>
+  <span class="c-flag">-b:a</span> 128k \                    <span class="c-comment"># Audio bitrate: 128kbps</span>
+  <span class="c-flag">-movflags</span> +faststart \        <span class="c-comment"># Cho phép stream trước khi tải xong</span>
   <span class="c-flag">-start_number</span> 0 \             <span class="c-comment"># Segment đầu tiên đánh số từ 0</span>
-  <span class="c-flag">-hls_time</span> 10 \                <span class="c-comment"># Mỗi segment = 10 giây video</span>
-  <span class="c-flag">-hls_list_size</span> 0 \            <span class="c-comment"># 0 = giữ tất cả segments trong .m3u8</span>
-  <span class="c-flag">-hls_flags</span> single_file \      <span class="c-comment"># Byte-Range: gộp tất cả vào 1 file .ts</span>
-  <span class="c-flag">-f</span> hls \                      <span class="c-comment"># Format output: HLS</span>
-  output.m3u8                   <span class="c-comment"># Tạo ra: output.m3u8 + output.ts</span></pre>
-        </div>
-        <div class="explain">
-          <strong>Byte-Range HLS (single_file) là gì?</strong> Thay vì tạo hàng trăm file .ts nhỏ (output0.ts, output1.ts...), FFmpeg tạo ra MỘT file output.ts lớn và file output.m3u8 chứa "map" offset byte của từng segment. Khi trình duyệt cần đoạn từ giây 30-40, nó chỉ tải byte 4MB đến 8MB của file .ts, không tải toàn bộ. Kết quả: ít file hơn, dễ quản lý hơn, phù hợp với mạng LAN tốc độ cao.
-        </div>
-        <table>
-          <tr><th>Thông số</th><th>Ý nghĩa</th><th>Thay đổi nếu...</th></tr>
-          <tr><td>-hls_time 10</td><td>Mỗi chunk = 10 giây</td><td>Mạng chậm → tăng lên 30s</td></tr>
-          <tr><td>-profile baseline</td><td>Tương thích max</td><td>Chỉ dùng Chrome → đổi main/high</td></tr>
-          <tr><td>-b:a 128k</td><td>Audio bitrate</td><td>Muốn chất lượng âm thanh cao → 192k</td></tr>
-        </table>
+  <span class="c-flag">-hls_time</span> 10 \                <span class="c-comment"># Mỗi segment = 10 giây</span>
+  <span class="c-flag">-hls_list_size</span> 0 \            <span class="c-comment"># Giữ tất cả segments trong .m3u8</span>
+  <span class="c-flag">-hls_flags</span> single_file \      <span class="c-comment"># Byte-Range: gộp thành 1 file .ts</span>
+  <span class="c-flag">-f</span> hls \
+  output.m3u8</pre>
       </div>
+      <div class="box info"><strong>Byte-Range HLS (single_file) là gì?</strong> Thay vì tạo hàng trăm file .ts nhỏ, FFmpeg tạo 1 file output.ts lớn + file output.m3u8 chứa "map" offset byte từng segment. Khi cần giây 30-40, trình duyệt chỉ tải byte 4MB→8MB, không tải toàn bộ. Kết quả: ít file hơn, dễ quản lý, phù hợp mạng LAN tốc độ cao.</div>
+      <div class="table-wrap"><table>
+        <tr><th>Thông số</th><th>Ý nghĩa</th><th>Thay đổi khi...</th></tr>
+        <tr><td>-hls_time 10</td><td>Mỗi chunk = 10 giây</td><td>Mạng chậm → tăng 30s</td></tr>
+        <tr><td>-profile baseline</td><td>Tương thích tối đa</td><td>Chỉ Chrome → đổi main/high</td></tr>
+        <tr><td>-b:a 128k</td><td>Audio bitrate</td><td>Muốn âm thanh tốt hơn → 192k</td></tr>
+      </table></div>
     </div>
+  </div>
 
-    <div class="step">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">⚡</div>
-        <div class="step-name">3.2 — Script Tự Động Hóa Hoàn Chỉnh</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <div class="code-block">
-          <div class="code-label"><span>video_processor/processor.py</span></div>
-          <pre><span class="c-key">import</span> os, sys, subprocess, shutil, logging
+  <div class="step">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">⚡</div>
+      <div class="step-name">3.2 — processor.py — Script tự động hóa <span class="new-badge">UPDATED</span></div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <div class="box warn"><strong>Cập nhật so với kế hoạch gốc:</strong> Script đã được cập nhật để dùng models mới — <code>Episode</code> giờ có <code>season_number</code>, <code>m3u8_path</code> thay vì <code>video_url</code>, và <code>duration</code> tính bằng phút (không phải giây).</div>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">video_processor/processor.py</span></div>
+        <pre><span class="c-key">import</span> os, sys, subprocess, shutil, logging
 <span class="c-key">from</span> pathlib <span class="c-key">import</span> Path
-<span class="c-key">from</span> datetime <span class="c-key">import</span> datetime
 
-<span class="c-comment"># ─── Thiết lập để dùng Django ORM ─────────────────</span>
 sys.path.insert(<span class="c-num">0</span>, str(Path(__file__).resolve().parent.parent))
-os.environ.setdefault(<span class="c-str">'DJANGO_SETTINGS_MODULE'</span>, <span class="c-str">'core.settings'</span>)
+os.environ.setdefault(<span class="c-str">'DJANGO_SETTINGS_MODULE'</span>, <span class="c-str">'config.settings'</span>)
+<span class="c-key">import</span> django; django.setup()
 
-<span class="c-key">import</span> django
-django.setup()
+<span class="c-key">from</span> films.models <span class="c-key">import</span> Movie, Episode   <span class="c-comment"># ★ 'films' thay vì 'movies'</span>
 
-<span class="c-key">from</span> movies.models <span class="c-key">import</span> Movie, Episode
-
-<span class="c-comment"># ─── Logging ──────────────────────────────────────</span>
 logging.basicConfig(
-    filename=<span class="c-str">'logs/processor.log'</span>,
-    level=logging.INFO,
-    format=<span class="c-str">'%(asctime)s [%(levelname)s] %(message)s'</span>,
-    datefmt=<span class="c-str">'%Y-%m-%d %H:%M:%S'</span>
+    filename=<span class="c-str">'logs/processor.log'</span>, level=logging.INFO,
+    format=<span class="c-str">'%(asctime)s [%(levelname)s] %(message)s'</span>
 )
 log = logging.getLogger(__name__)
 
-<span class="c-comment"># ─── Đường dẫn ────────────────────────────────────</span>
-BASE_DIR   = Path(__file__).resolve().parent.parent
-RAW_DIR    = Path(__file__).parent / <span class="c-str">'raw_videos'</span>
-MEDIA_DIR  = BASE_DIR / <span class="c-str">'media'</span>
-HLS_DIR    = MEDIA_DIR / <span class="c-str">'hls_streams'</span>
-DONE_DIR   = Path(__file__).parent / <span class="c-str">'processed'</span>   <span class="c-comment"># Lưu file đã xử lý</span>
+BASE_DIR  = Path(__file__).resolve().parent.parent
+RAW_DIR   = Path(__file__).parent / <span class="c-str">'raw_videos'</span>
+HLS_DIR   = BASE_DIR / <span class="c-str">'media'</span> / <span class="c-str">'hls_streams'</span>
+DONE_DIR  = Path(__file__).parent / <span class="c-str">'processed'</span>
 
-<span class="c-comment"># Tạo thư mục nếu chưa có</span>
 <span class="c-key">for</span> d <span class="c-key">in</span> [RAW_DIR, HLS_DIR, DONE_DIR]:
     d.mkdir(parents=<span class="c-num">True</span>, exist_ok=<span class="c-num">True</span>)
 
 
-<span class="c-key">def</span> <span class="c-fn">get_video_duration</span>(input_path: Path) -> int:
-    <span class="c-str">"""Lấy thời lượng video (giây) bằng ffprobe."""</span>
-    result = subprocess.run([
-        <span class="c-str">'ffprobe'</span>, <span class="c-str">'-v'</span>, <span class="c-str">'quiet'</span>,
-        <span class="c-str">'-print_format'</span>, <span class="c-str">'csv=p=0'</span>,
-        <span class="c-str">'-show_entries'</span>, <span class="c-str">'format=duration'</span>,
-        str(input_path)
+<span class="c-key">def</span> <span class="c-fn">get_duration_minutes</span>(path: Path) -> int:
+    <span class="c-str">"""Lấy thời lượng (phút) bằng ffprobe."""</span>
+    r = subprocess.run([
+        <span class="c-str">'ffprobe'</span>, <span class="c-str">'-v'</span>, <span class="c-str">'quiet'</span>, <span class="c-str">'-print_format'</span>, <span class="c-str">'csv=p=0'</span>,
+        <span class="c-str">'-show_entries'</span>, <span class="c-str">'format=duration'</span>, str(path)
     ], capture_output=<span class="c-num">True</span>, text=<span class="c-num">True</span>)
-    <span class="c-key">try</span>:
-        <span class="c-key">return</span> int(float(result.stdout.strip()))
-    <span class="c-key">except</span> (ValueError, AttributeError):
-        <span class="c-key">return</span> <span class="c-num">0</span>
+    <span class="c-key">try</span>: <span class="c-key">return</span> max(<span class="c-num">1</span>, int(float(r.stdout.strip()) / <span class="c-num">60</span>))
+    <span class="c-key">except</span>: <span class="c-key">return</span> <span class="c-num">0</span>
 
 
 <span class="c-key">def</span> <span class="c-fn">encode_hls</span>(input_path: Path, output_dir: Path) -> bool:
-    <span class="c-str">"""Chạy FFmpeg encode HLS. Trả về True nếu thành công."""</span>
     output_dir.mkdir(parents=<span class="c-num">True</span>, exist_ok=<span class="c-num">True</span>)
-    output_m3u8 = output_dir / <span class="c-str">'output.m3u8'</span>
-
     cmd = [
         <span class="c-str">'ffmpeg'</span>, <span class="c-str">'-i'</span>, str(input_path),
-        <span class="c-str">'-c:v'</span>, <span class="c-str">'libx264'</span>,
-        <span class="c-str">'-profile:v'</span>, <span class="c-str">'baseline'</span>,
-        <span class="c-str">'-level'</span>, <span class="c-str">'3.0'</span>,
-        <span class="c-str">'-c:a'</span>, <span class="c-str">'aac'</span>,
-        <span class="c-str">'-b:a'</span>, <span class="c-str">'128k'</span>,
-        <span class="c-str">'-start_number'</span>, <span class="c-str">'0'</span>,
-        <span class="c-str">'-hls_time'</span>, <span class="c-str">'10'</span>,
-        <span class="c-str">'-hls_list_size'</span>, <span class="c-str">'0'</span>,
-        <span class="c-str">'-hls_flags'</span>, <span class="c-str">'single_file'</span>,
-        <span class="c-str">'-f'</span>, <span class="c-str">'hls'</span>,
-        str(output_m3u8),
+        <span class="c-str">'-c:v'</span>, <span class="c-str">'libx264'</span>, <span class="c-str">'-profile:v'</span>, <span class="c-str">'baseline'</span>, <span class="c-str">'-level'</span>, <span class="c-str">'3.0'</span>,
+        <span class="c-str">'-c:a'</span>, <span class="c-str">'aac'</span>, <span class="c-str">'-b:a'</span>, <span class="c-str">'128k'</span>, <span class="c-str">'-movflags'</span>, <span class="c-str">'+faststart'</span>,
+        <span class="c-str">'-start_number'</span>, <span class="c-str">'0'</span>, <span class="c-str">'-hls_time'</span>, <span class="c-str">'10'</span>,
+        <span class="c-str">'-hls_list_size'</span>, <span class="c-str">'0'</span>, <span class="c-str">'-hls_flags'</span>, <span class="c-str">'single_file'</span>,
+        <span class="c-str">'-f'</span>, <span class="c-str">'hls'</span>, str(output_dir / <span class="c-str">'output.m3u8'</span>),
     ]
     <span class="c-key">try</span>:
-        log.info(<span class="c-str">f"Bắt đầu encode: {input_path.name}"</span>)
-        result = subprocess.run(
-            cmd,
-            capture_output=<span class="c-num">True</span>, text=<span class="c-num">True</span>,
-            timeout=<span class="c-num">3600</span>        <span class="c-comment"># Timeout 1 tiếng — phim dài ~2GB</span>
-        )
+        result = subprocess.run(cmd, capture_output=<span class="c-num">True</span>, text=<span class="c-num">True</span>, timeout=<span class="c-num">3600</span>)
         <span class="c-key">if</span> result.returncode != <span class="c-num">0</span>:
-            log.error(<span class="c-str">f"FFmpeg lỗi: {result.stderr[-500:]}"</span>)
+            log.error(<span class="c-str">f"FFmpeg lỗi: {result.stderr[-<span class="c-num">500</span>:]}"</span>)
             <span class="c-key">return False</span>
-        log.info(<span class="c-str">f"Encode thành công: {input_path.name}"</span>)
         <span class="c-key">return True</span>
     <span class="c-key">except</span> subprocess.TimeoutExpired:
-        log.error(<span class="c-str">f"Timeout khi encode {input_path.name}"</span>)
-        <span class="c-key">return False</span>
-    <span class="c-key">except</span> Exception <span class="c-key">as</span> e:
-        log.error(<span class="c-str">f"Lỗi không xác định: {e}"</span>)
-        <span class="c-key">return False</span>
+        log.error(<span class="c-str">f"Timeout: {input_path.name}"</span>); <span class="c-key">return False</span>
 
 
 <span class="c-key">def</span> <span class="c-fn">parse_filename</span>(filename: str):
     <span class="c-str">"""
-    Phân tích tên file theo quy ước:
-    ten-phim_tap-1.mp4  → movie_slug='ten-phim', ep=1
-    ten-phim.mp4        → movie_slug='ten-phim', ep=1
+    ten-phim_tap-3.mp4      → slug='ten-phim', season=1, ep=3
+    ten-phim_s2_tap-5.mp4   → slug='ten-phim', season=2, ep=5
     """</span>
     stem = Path(filename).stem
+    season = <span class="c-num">1</span>
+    <span class="c-key">if</span> <span class="c-str">'_s'</span> <span class="c-key">in</span> stem <span class="c-key">and</span> <span class="c-str">'_tap-'</span> <span class="c-key">in</span> stem:
+        parts  = stem.split(<span class="c-str">'_s'</span>)
+        s_ep   = parts[<span class="c-num">1</span>].split(<span class="c-str">'_tap-'</span>)
+        <span class="c-key">return</span> parts[<span class="c-num">0</span>], int(s_ep[<span class="c-num">0</span>]), int(s_ep[<span class="c-num">1</span>])
     <span class="c-key">if</span> <span class="c-str">'_tap-'</span> <span class="c-key">in</span> stem:
         parts = stem.split(<span class="c-str">'_tap-'</span>)
-        <span class="c-key">return</span> parts[<span class="c-num">0</span>], int(parts[<span class="c-num">1</span>])
-    <span class="c-key">return</span> stem, <span class="c-num">1</span>
+        <span class="c-key">return</span> parts[<span class="c-num">0</span>], <span class="c-num">1</span>, int(parts[<span class="c-num">1</span>])
+    <span class="c-key">return</span> stem, <span class="c-num">1</span>, <span class="c-num">1</span>   <span class="c-comment"># Phim lẻ</span>
 
 
 <span class="c-key">def</span> <span class="c-fn">process_video</span>(mp4_path: Path):
-    <span class="c-str">"""Xử lý một file .mp4: encode + tạo DB record."""</span>
-    movie_slug, episode_num = parse_filename(mp4_path.name)
+    movie_slug, season_num, ep_num = parse_filename(mp4_path.name)
 
-    <span class="c-comment"># Tìm hoặc tạo Movie</span>
     movie, created = Movie.objects.get_or_create(
         slug=movie_slug,
-        defaults={<span class="c-str">'title'</span>: movie_slug.replace(<span class="c-str">'-'</span>, <span class="c-str">' '</span>).title()}
+        defaults={
+            <span class="c-str">'title'</span>      : movie_slug.replace(<span class="c-str">'-'</span>, <span class="c-str">' '</span>).title(),
+            <span class="c-str">'medium_type'</span>: <span class="c-str">'Movie'</span> <span class="c-key">if</span> ep_num == <span class="c-num">1</span> <span class="c-key">else</span> <span class="c-str">'Series'</span>,
+            <span class="c-str">'status'</span>     : <span class="c-str">'Completed'</span>,
+        }
     )
-    <span class="c-key">if</span> created:
-        log.info(<span class="c-str">f"Tạo Movie mới: {movie.title}"</span>)
+    <span class="c-key">if</span> created: log.info(<span class="c-str">f"Tạo Movie: {movie.title}"</span>)
 
-    <span class="c-comment"># Bỏ qua nếu Episode đã tồn tại và ở trạng thái ready</span>
-    <span class="c-key">if</span> Episode.objects.filter(
-            movie=movie, episode_num=episode_num,
-            status=<span class="c-str">'ready'</span>).exists():
+    <span class="c-comment"># Bỏ qua nếu tập đã tồn tại</span>
+    <span class="c-key">if</span> Episode.objects.filter(movie=movie, season_number=season_num, episode_number=ep_num).exists():
         log.info(<span class="c-str">f"Bỏ qua (đã tồn tại): {mp4_path.name}"</span>)
         <span class="c-key">return</span>
 
-    <span class="c-comment"># Tạo Episode với trạng thái "processing"</span>
-    output_dir = HLS_DIR / movie_slug / <span class="c-str">f'tap-{episode_num}'</span>
-    video_url  = <span class="c-str">f'hls_streams/{movie_slug}/tap-{episode_num}/output.m3u8'</span>
+    output_dir = HLS_DIR / movie_slug / <span class="c-str">f's{season_num}-ep{ep_num}'</span>
+    m3u8_path  = <span class="c-str">f'hls_streams/{movie_slug}/s{season_num}-ep{ep_num}/output.m3u8'</span>
 
-    episode, _ = Episode.objects.update_or_create(
-        movie=movie, episode_num=episode_num,
-        defaults={
-            <span class="c-str">'video_url'</span>: video_url,
-            <span class="c-str">'status'</span>   : <span class="c-str">'processing'</span>
-        }
+    episode = Episode.objects.create(
+        movie=movie, season_number=season_num, episode_number=ep_num,
+        m3u8_path=m3u8_path,   <span class="c-comment"># ★ 'video_url' → 'm3u8_path'</span>
     )
 
-    <span class="c-comment"># Lấy thời lượng trước khi encode</span>
-    duration = get_video_duration(mp4_path)
+    duration = get_duration_minutes(mp4_path)   <span class="c-comment"># ★ phút thay vì giây</span>
 
-    <span class="c-comment"># Encode</span>
     <span class="c-key">if</span> encode_hls(mp4_path, output_dir):
-        episode.status   = <span class="c-str">'ready'</span>
         episode.duration = duration
         episode.save()
-
-        <span class="c-comment"># Di chuyển file gốc vào thư mục "processed"</span>
         shutil.move(str(mp4_path), str(DONE_DIR / mp4_path.name))
-        log.info(<span class="c-str">f"Hoàn thành: {mp4_path.name} → tap {episode_num}"</span>)
+        log.info(<span class="c-str">f"✓ {mp4_path.name} → S{season_num}E{ep_num}"</span>)
     <span class="c-key">else</span>:
-        episode.status = <span class="c-str">'error'</span>
-        episode.save()
-        log.error(<span class="c-str">f"Encode thất bại: {mp4_path.name}"</span>)
+        episode.delete()   <span class="c-comment"># Xóa record nếu encode thất bại</span>
+        log.error(<span class="c-str">f"✗ Encode thất bại: {mp4_path.name}"</span>)
 
 
 <span class="c-key">def</span> <span class="c-fn">main</span>():
     mp4_files = list(RAW_DIR.glob(<span class="c-str">'*.mp4'</span>))
-    <span class="c-key">if not</span> mp4_files:
-        log.info(<span class="c-str">"Không có file .mp4 mới."</span>)
-        <span class="c-key">return</span>
-
-    log.info(<span class="c-str">f"Tìm thấy {len(mp4_files)} file .mp4 mới"</span>)
-    <span class="c-key">for</span> mp4 <span class="c-key">in</span> sorted(mp4_files):
-        process_video(mp4)
-
+    <span class="c-key">if not</span> mp4_files: log.info(<span class="c-str">"Không có file .mp4 mới."</span>); <span class="c-key">return</span>
+    log.info(<span class="c-str">f"Tìm thấy {len(mp4_files)} file mp4"</span>)
+    <span class="c-key">for</span> f <span class="c-key">in</span> sorted(mp4_files):
+        process_video(f)
 
 <span class="c-key">if</span> __name__ == <span class="c-str">'__main__'</span>:
     main()</pre>
-        </div>
-        <div class="tip-box"><strong>💡 Quy ước đặt tên file:</strong> Đặt file theo định dạng <code>ten-phim_tap-3.mp4</code> để script tự nhận diện tên phim và số tập. Ví dụ: <code>one-piece_tap-1.mp4</code>, <code>one-piece_tap-2.mp4</code>.</div>
+      </div>
+      <div class="box tip"><strong>Quy ước đặt tên file mới:</strong><br>
+        Phim lẻ: <code>ten-phim.mp4</code> hoặc <code>ten-phim_tap-1.mp4</code><br>
+        Series mùa 1: <code>one-piece_tap-1.mp4</code>, <code>one-piece_tap-2.mp4</code><br>
+        Series mùa 2: <code>one-piece_s2_tap-1.mp4</code>, <code>one-piece_s2_tap-2.mp4</code>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- PHASE 4 -->
-  <div class="phase" id="p4">
-    <div class="phase-header">
-      <div class="phase-num">PHASE 4</div>
-      <h2>Tự Động Hóa Metadata (Crawler)</h2>
-      <div class="phase-week">Tuần 4</div>
+<!-- ═══════════════════════════════════════════════
+     PHASE 4 — CRAWLER
+════════════════════════════════════════════════════ -->
+<div class="section" id="p4">
+  <div class="section-header">
+    <div class="section-num">PHASE 4</div>
+    <h2>Tự Động Hóa Metadata (Crawler)</h2>
+    <div class="section-week">Tuần 4</div>
+  </div>
+
+  <div class="step open">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🕷️</div>
+      <div class="step-name">4.1 — Crawler với Rate Limiting <span class="new-badge">UPDATED</span></div>
+      <div class="step-toggle">▼</div>
     </div>
-
-    <div class="step open">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">🕷️</div>
-        <div class="step-name">4.1 — Script Crawler với Rate Limiting</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <div class="code-block">
-          <div class="code-label"><span>crawlers/fetch_metadata.py — Gọi Jikan API (MyAnimeList)</span></div>
-          <pre><span class="c-key">import</span> os, sys, time, requests, logging
+    <div class="step-body">
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">crawlers/fetch_metadata.py — Jikan API (MyAnimeList)</span></div>
+        <pre><span class="c-key">import</span> os, sys, time, requests, logging
 <span class="c-key">from</span> pathlib <span class="c-key">import</span> Path
-<span class="c-key">from</span> django.core.files.base <span class="c-key">import</span> ContentFile
 
 sys.path.insert(<span class="c-num">0</span>, str(Path(__file__).resolve().parent.parent))
-os.environ.setdefault(<span class="c-str">'DJANGO_SETTINGS_MODULE'</span>, <span class="c-str">'core.settings'</span>)
+os.environ.setdefault(<span class="c-str">'DJANGO_SETTINGS_MODULE'</span>, <span class="c-str">'config.settings'</span>)
 <span class="c-key">import</span> django; django.setup()
 
-<span class="c-key">from</span> movies.models <span class="c-key">import</span> Movie, Genre
+<span class="c-key">from</span> films.models <span class="c-key">import</span> Movie, Genre, Country, Person, MovieCastCrew
 
 log = logging.getLogger(__name__)
-
-<span class="c-comment"># Jikan v4 — Unofficial MyAnimeList API (miễn phí, không cần key)</span>
 JIKAN_BASE = <span class="c-str">"https://api.jikan.moe/v4"</span>
-
-<span class="c-comment"># ★ QUAN TRỌNG: Rate limit — Jikan giới hạn 3 req/giây</span>
-RATE_DELAY = <span class="c-num">0.5</span>    <span class="c-comment"># Chờ 0.5s giữa mỗi request</span>
+RATE_DELAY = <span class="c-num">0.5</span>     <span class="c-comment"># Jikan giới hạn ~3 req/giây</span>
 
 
-<span class="c-key">def</span> <span class="c-fn">jikan_search</span>(title: str) -> dict | None:
-    <span class="c-str">"""Tìm kiếm anime theo tên. Trả về dict data hoặc None."""</span>
-    time.sleep(RATE_DELAY)          <span class="c-comment"># Tránh bị block IP</span>
+<span class="c-key">def</span> <span class="c-fn">jikan_get</span>(title: str) -> dict | <span class="c-num">None</span>:
+    time.sleep(RATE_DELAY)
     <span class="c-key">try</span>:
-        r = requests.get(
-            <span class="c-str">f"{JIKAN_BASE}/anime"</span>,
-            params={<span class="c-str">'q'</span>: title, <span class="c-str">'limit'</span>: <span class="c-num">1</span>},
-            timeout=<span class="c-num">10</span>
-        )
+        r = requests.get(<span class="c-str">f"{JIKAN_BASE}/anime"</span>,
+            params={<span class="c-str">'q'</span>: title, <span class="c-str">'limit'</span>: <span class="c-num">1</span>}, timeout=<span class="c-num">10</span>)
         r.raise_for_status()
         data = r.json().get(<span class="c-str">'data'</span>, [])
         <span class="c-key">return</span> data[<span class="c-num">0</span>] <span class="c-key">if</span> data <span class="c-key">else None</span>
-    <span class="c-key">except</span> requests.RequestException <span class="c-key">as</span> e:
-        log.warning(<span class="c-str">f"Jikan API lỗi khi tìm '{title}': {e}"</span>)
+    <span class="c-key">except</span> Exception <span class="c-key">as</span> e:
+        log.warning(<span class="c-str">f"Jikan lỗi khi tìm '{title}': {e}"</span>)
         <span class="c-key">return None</span>
 
 
-<span class="c-key">def</span> <span class="c-fn">download_poster</span>(movie: Movie, url: str) -> bool:
-    <span class="c-str">"""Tải ảnh poster và lưu vào ImageField."""</span>
-    <span class="c-key">if</span> movie.poster:           <span class="c-comment"># Đã có poster rồi, bỏ qua</span>
-        <span class="c-key">return False</span>
+<span class="c-key">def</span> <span class="c-fn">download_image</span>(url: str, save_path: Path) -> bool:
+    <span class="c-key">if</span> save_path.exists(): <span class="c-key">return False</span>
     <span class="c-key">try</span>:
         time.sleep(RATE_DELAY)
         r = requests.get(url, timeout=<span class="c-num">15</span>)
         r.raise_for_status()
-        ext  = url.rsplit(<span class="c-str">'.'</span>, <span class="c-num">1</span>)[-<span class="c-num">1</span>].lower() <span class="c-key">or</span> <span class="c-str">'jpg'</span>
-        fname = <span class="c-str">f"{movie.slug}.{ext}"</span>
-        movie.poster.save(fname, ContentFile(r.content), save=<span class="c-num">True</span>)
+        save_path.parent.mkdir(parents=<span class="c-num">True</span>, exist_ok=<span class="c-num">True</span>)
+        save_path.write_bytes(r.content)
         <span class="c-key">return True</span>
     <span class="c-key">except</span> Exception <span class="c-key">as</span> e:
-        log.warning(<span class="c-str">f"Tải poster lỗi: {e}"</span>)
+        log.warning(<span class="c-str">f"Tải ảnh lỗi: {e}"</span>)
         <span class="c-key">return False</span>
 
 
 <span class="c-key">def</span> <span class="c-fn">enrich_movie</span>(movie: Movie):
-    <span class="c-str">"""Làm giàu thông tin cho một Movie từ Jikan."""</span>
-    log.info(<span class="c-str">f"Crawl metadata: {movie.title}"</span>)
-    data = jikan_search(movie.title)
-    <span class="c-key">if not</span> data:
-        log.warning(<span class="c-str">f"Không tìm thấy: {movie.title}"</span>)
-        <span class="c-key">return</span>
+    log.info(<span class="c-str">f"Crawl: {movie.title}"</span>)
+    data = jikan_get(movie.title)
+    <span class="c-key">if not</span> data: <span class="c-key">return</span>
 
-    <span class="c-comment"># Cập nhật thông tin text</span>
-    movie.description  = data.get(<span class="c-str">'synopsis'</span>,     <span class="c-str">''</span>) <span class="c-key">or</span> movie.description
-    movie.title_en     = data.get(<span class="c-str">'title_english'</span>,<span class="c-str">''</span>) <span class="c-key">or</span> movie.title_en
-    movie.release_year = (data.get(<span class="c-str">'aired'</span>, {})
-                              .get(<span class="c-str">'prop'</span>, {})
-                              .get(<span class="c-str">'from'</span>, {})
-                              .get(<span class="c-str">'year'</span>))
-    movie.rating       = data.get(<span class="c-str">'score'</span>)
+    <span class="c-comment"># Cập nhật text fields</span>
+    movie.description   = data.get(<span class="c-str">'synopsis'</span>, <span class="c-str">''</span>) <span class="c-key">or</span> movie.description
+    movie.original_title= data.get(<span class="c-str">'title_japanese'</span>, <span class="c-str">''</span>)
+    movie.release_year  = (data.get(<span class="c-str">'aired'</span>, {}).get(<span class="c-str">'prop'</span>, {})
+                              .get(<span class="c-str">'from'</span>, {}).get(<span class="c-str">'year'</span>))
+    movie.total_episodes = data.get(<span class="c-str">'episodes'</span>)
+    movie.status = <span class="c-str">'Completed'</span> <span class="c-key">if</span> data.get(<span class="c-str">'status'</span>) == <span class="c-str">'Finished Airing'</span> <span class="c-key">else</span> <span class="c-str">'Ongoing'</span>
     movie.save()
 
-    <span class="c-comment"># Xử lý genre (ManyToMany)</span>
+    <span class="c-comment"># Genres (M2M)</span>
     <span class="c-key">for</span> g <span class="c-key">in</span> data.get(<span class="c-str">'genres'</span>, []):
-        genre, _ = Genre.objects.get_or_create(name=g[<span class="c-str">'name'</span>])
+        genre, _ = Genre.objects.get_or_create(genre_name=g[<span class="c-str">'name'</span>])
         movie.genres.add(genre)
 
     <span class="c-comment"># Tải poster</span>
-    poster_url = (data.get(<span class="c-str">'images'</span>, {})
-                      .get(<span class="c-str">'jpg'</span>, {})
-                      .get(<span class="c-str">'large_image_url'</span>))
+    poster_url = data.get(<span class="c-str">'images'</span>, {}).get(<span class="c-str">'jpg'</span>, {}).get(<span class="c-str">'large_image_url'</span>)
     <span class="c-key">if</span> poster_url:
-        download_poster(movie, poster_url)
+        save_path = Path(<span class="c-str">f'media/posters/{movie.id}.jpg'</span>)
+        <span class="c-key">if</span> download_image(poster_url, save_path):
+            movie.poster_path = <span class="c-str">f'/media/posters/{movie.id}.jpg'</span>
+            movie.save()
 
-    log.info(<span class="c-str">f"Hoàn thành: {movie.title} (rating={movie.rating})"</span>)
+    log.info(<span class="c-str">f"✓ Hoàn thành: {movie.title}"</span>)
 
 
 <span class="c-key">def</span> <span class="c-fn">main</span>():
-    <span class="c-comment"># Chỉ crawl các movie chưa có description</span>
     movies = Movie.objects.filter(description=<span class="c-str">''</span>)
-    log.info(<span class="c-str">f"Crawl metadata cho {movies.count()} phim"</span>)
+    log.info(<span class="c-str">f"Crawl cho {movies.count()} phim chưa có description"</span>)
     <span class="c-key">for</span> movie <span class="c-key">in</span> movies:
         enrich_movie(movie)
 
-
 <span class="c-key">if</span> __name__ == <span class="c-str">'__main__'</span>:
     main()</pre>
-        </div>
-        <div class="warn-box"><strong>⚠ Rate Limiting:</strong> Jikan API giới hạn 60 request/phút. Nếu crawl quá nhanh, IP của bạn sẽ bị block tạm thời. Đoạn <code>time.sleep(RATE_DELAY)</code> trước mỗi request là bắt buộc.</div>
       </div>
+      <div class="box warn"><strong>Rate Limiting:</strong> Jikan API giới hạn ~3 req/giây. <code>time.sleep(0.5)</code> trước mỗi request là bắt buộc để không bị block IP.</div>
     </div>
   </div>
+</div>
 
-  <!-- PHASE 5 -->
-  <div class="phase" id="p5">
-    <div class="phase-header">
-      <div class="phase-num">PHASE 5</div>
-      <h2>Frontend & Giao Diện Phát</h2>
-      <div class="phase-week">Tuần 5</div>
+<!-- ═══════════════════════════════════════════════
+     PHASE 5 — FRONTEND
+════════════════════════════════════════════════════ -->
+<div class="section" id="p5">
+  <div class="section-header">
+    <div class="section-num">PHASE 5</div>
+    <h2>Frontend & Giao Diện Phát</h2>
+    <div class="section-week">Tuần 5</div>
+  </div>
+
+  <div class="step open">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🎥</div>
+      <div class="step-name">5.1 — Views & URLs <span class="new-badge">UPDATED</span></div>
+      <div class="step-toggle">▼</div>
     </div>
-
-    <div class="step open">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">🎥</div>
-        <div class="step-name">5.1 — Views & URLs Django</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <div class="code-block">
-          <div class="code-label"><span>movies/views.py</span></div>
-          <pre><span class="c-key">from</span> django.shortcuts <span class="c-key">import</span> render, get_object_or_404
+    <div class="step-body">
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">films/views.py</span></div>
+        <pre><span class="c-key">from</span> django.shortcuts <span class="c-key">import</span> render, get_object_or_404
 <span class="c-key">from</span> django.core.paginator <span class="c-key">import</span> Paginator
-<span class="c-key">from</span> .models <span class="c-key">import</span> Movie, Episode
+<span class="c-key">from</span> django.db.models <span class="c-key">import</span> Prefetch
+<span class="c-key">from</span> .models <span class="c-key">import</span> Movie, Episode, Subtitle, Genre, Country
+
 
 <span class="c-key">def</span> <span class="c-fn">home</span>(request):
-    <span class="c-comment"># Chỉ hiện phim visible, sắp xếp mới nhất</span>
-    movies = Movie.objects.filter(is_visible=<span class="c-num">True</span>).prefetch_related(<span class="c-str">'genres'</span>)
+    movies = Movie.objects.filter(is_hidden=<span class="c-num">False</span>).prefetch_related(<span class="c-str">'genres'</span>, <span class="c-str">'countries'</span>)
 
-    <span class="c-comment"># Tìm kiếm</span>
-    query = request.GET.get(<span class="c-str">'q'</span>, <span class="c-str">''</span>)
-    <span class="c-key">if</span> query:
-        movies = movies.filter(title__icontains=query)
+    <span class="c-comment"># Filters</span>
+    genre_slug   = request.GET.get(<span class="c-str">'genre'</span>, <span class="c-str">''</span>)
+    country_code = request.GET.get(<span class="c-str">'country'</span>, <span class="c-str">''</span>)
+    medium_type  = request.GET.get(<span class="c-str">'type'</span>, <span class="c-str">''</span>)
+    query        = request.GET.get(<span class="c-str">'q'</span>, <span class="c-str">''</span>)
+    year         = request.GET.get(<span class="c-str">'year'</span>, <span class="c-str">''</span>)
 
-    <span class="c-comment"># Phân trang — 24 phim/trang</span>
-    paginator = Paginator(movies, <span class="c-num">24</span>)
+    <span class="c-key">if</span> genre_slug:   movies = movies.filter(genres__slug=genre_slug)
+    <span class="c-key">if</span> country_code: movies = movies.filter(countries__country_code=country_code)
+    <span class="c-key">if</span> medium_type:  movies = movies.filter(medium_type=medium_type)
+    <span class="c-key">if</span> query:        movies = movies.filter(title__icontains=query)
+    <span class="c-key">if</span> year:         movies = movies.filter(release_year=year)
+
+    <span class="c-comment"># Sort</span>
+    sort = request.GET.get(<span class="c-str">'sort'</span>, <span class="c-str">'-created_at'</span>)
+    <span class="c-key">if</span> sort <span class="c-key">in</span> (<span class="c-str">'-imdb_rating'</span>, <span class="c-str">'-view_count'</span>, <span class="c-str">'-release_year'</span>, <span class="c-str">'-created_at'</span>):
+        movies = movies.order_by(sort)
+
+    paginator = Paginator(movies.distinct(), <span class="c-num">24</span>)
     page_obj  = paginator.get_page(request.GET.get(<span class="c-str">'page'</span>))
 
-    <span class="c-key">return</span> render(request, <span class="c-str">'movies/home.html'</span>, {
-        <span class="c-str">'page_obj'</span>: page_obj,
-        <span class="c-str">'query'</span>   : query,
+    <span class="c-key">return</span> render(request, <span class="c-str">'films/home.html'</span>, {
+        <span class="c-str">'page_obj'</span> : page_obj,
+        <span class="c-str">'genres'</span>   : Genre.objects.all(),
+        <span class="c-str">'countries'</span>: Country.objects.all(),
     })
 
 
 <span class="c-key">def</span> <span class="c-fn">movie_detail</span>(request, slug):
-    movie    = get_object_or_404(Movie, slug=slug, is_visible=<span class="c-num">True</span>)
-    episodes = movie.episodes.filter(status=<span class="c-str">'ready'</span>)  <span class="c-comment"># Chỉ tập sẵn sàng</span>
-    <span class="c-comment"># Tập mặc định = tập đầu tiên</span>
-    ep_num   = request.GET.get(<span class="c-str">'tap'</span>, <span class="c-num">1</span>)
-    current_episode = episodes.filter(episode_num=ep_num).first() <span class="c-key">or</span> episodes.first()
+    movie = get_object_or_404(Movie, slug=slug, is_hidden=<span class="c-num">False</span>)
 
-    <span class="c-key">return</span> render(request, <span class="c-str">'movies/detail.html'</span>, {
-        <span class="c-str">'movie'</span>          : movie,
-        <span class="c-str">'episodes'</span>       : episodes,
-        <span class="c-str">'current_episode'</span>: current_episode,
+    <span class="c-comment"># Prefetch episodes + subtitles (tránh N+1 query)</span>
+    episodes = movie.episodes.prefetch_related(<span class="c-str">'subtitles'</span>)
+
+    <span class="c-comment"># Tập mặc định: season + episode từ query params</span>
+    s   = int(request.GET.get(<span class="c-str">'s'</span>, <span class="c-num">1</span>))
+    ep  = int(request.GET.get(<span class="c-str">'tap'</span>, <span class="c-num">1</span>))
+    current = (episodes.filter(season_number=s, episode_number=ep).first()
+               <span class="c-key">or</span> episodes.first())
+
+    <span class="c-comment"># Group episodes by season</span>
+    seasons = {}
+    <span class="c-key">for</span> e <span class="c-key">in</span> episodes:
+        seasons.setdefault(e.season_number, []).append(e)
+
+    <span class="c-key">return</span> render(request, <span class="c-str">'films/detail.html'</span>, {
+        <span class="c-str">'movie'</span>  : movie,
+        <span class="c-str">'seasons'</span>: seasons,
+        <span class="c-str">'current'</span>: current,
+        <span class="c-str">'cast'</span>   : movie.moviecastcrew_set.select_related(<span class="c-str">'person'</span>).filter(role=<span class="c-str">'Cast'</span>)[:10],
+        <span class="c-str">'trailers'</span>: movie.trailers.all(),
+    })
+
+
+<span class="c-key">def</span> <span class="c-fn">person_detail</span>(request, slug):   <span class="c-comment"># ★ MỚI</span>
+    person  = get_object_or_404(Person, slug=slug)
+    filmography = Movie.objects.filter(
+        cast_crew=person, is_hidden=<span class="c-num">False</span>
+    ).order_by(<span class="c-str">'-release_year'</span>)
+    <span class="c-key">return</span> render(request, <span class="c-str">'films/person.html'</span>, {
+        <span class="c-str">'person'</span>: person, <span class="c-str">'filmography'</span>: filmography
     })</pre>
-        </div>
-        <div class="code-block">
-          <div class="code-label"><span>movies/urls.py</span></div>
-          <pre><span class="c-key">from</span> django.urls <span class="c-key">import</span> path
-<span class="c-key">from</span> . <span class="c-key">import</span> views
-
-urlpatterns = [
-    path(<span class="c-str">''</span>,           views.home,         name=<span class="c-str">'home'</span>),
-    path(<span class="c-str">'&lt;slug:slug&gt;/'</span>, views.movie_detail, name=<span class="c-str">'movie_detail'</span>),
-]</pre>
-        </div>
-        <div class="code-block">
-          <div class="code-label"><span>core/urls.py</span></div>
-          <pre><span class="c-key">from</span> django.contrib <span class="c-key">import</span> admin
-<span class="c-key">from</span> django.urls <span class="c-key">import</span> path, include
-<span class="c-key">from</span> django.conf <span class="c-key">import</span> settings
-<span class="c-key">from</span> django.conf.urls.static <span class="c-key">import</span> static
-
-urlpatterns = [
-    path(<span class="c-str">'admin/'</span>, admin.site.urls),
-    path(<span class="c-str">''</span>,       include(<span class="c-str">'movies.urls'</span>)),
-]
-
-<span class="c-comment"># Chỉ cần trong môi trường development (DEBUG=True)</span>
-<span class="c-key">if</span> settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)</pre>
-        </div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">📺</div>
-        <div class="step-name">5.2 — Template Trang Xem Phim với hls.js</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <div class="code-block">
-          <div class="code-label"><span>movies/templates/movies/detail.html</span></div>
-          <pre><span class="c-key">&lt;!-- Phần trình phát video --&gt;</span>
-&lt;video id=<span class="c-str">"player"</span>
-       style=<span class="c-str">"width:100%;max-height:70vh;background:#000"</span>
-       controls
-       preload=<span class="c-str">"auto"</span>
-       poster=<span class="c-str">"{% if movie.poster %}{{ movie.poster.url }}{% endif %}"</span>
-&gt;&lt;/video&gt;
-
-<span class="c-comment">&lt;!-- Danh sách tập --&gt;</span>
-&lt;div class=<span class="c-str">"episode-list"</span>&gt;
-  {% for ep in episodes %}
-  &lt;a href=<span class="c-str">"?tap={{ ep.episode_num }}"</span>
-     class=<span class="c-str">"ep-btn {% if ep == current_episode %}active{% endif %}"</span>&gt;
-    Tập {{ ep.episode_num }}
-  &lt;/a&gt;
-  {% endfor %}
-&lt;/div&gt;
-
-<span class="c-comment">&lt;!-- hls.js — tương thích cross-browser --&gt;</span>
-&lt;script src=<span class="c-str">"https://cdn.jsdelivr.net/npm/hls.js@latest"</span>&gt;&lt;/script&gt;
-&lt;script&gt;
-  <span class="c-key">const</span> video   = document.getElementById(<span class="c-str">'player'</span>);
-  <span class="c-comment">// Đường dẫn đến file .m3u8 — được render từ Django</span>
-  <span class="c-key">const</span> m3u8Url = <span class="c-str">"/media/{{ current_episode.video_url }}"</span>;
-
-  <span class="c-key">if</span> (Hls.isSupported()) {
-    <span class="c-comment">// Chrome, Firefox, Edge — dùng hls.js</span>
-    <span class="c-key">const</span> hls = <span class="c-key">new</span> Hls({
-      maxBufferLength: <span class="c-num">60</span>,          <span class="c-comment">// Buffer tối đa 60 giây</span>
-      maxMaxBufferLength: <span class="c-num">120</span>,       <span class="c-comment">// Tối đa 120 giây trong mạng LAN nhanh</span>
-    });
-    hls.loadSource(m3u8Url);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () =&gt; video.play().catch(() =&gt; {}));
-    hls.on(Hls.Events.ERROR, (_, data) =&gt; {
-      <span class="c-key">if</span> (data.fatal) console.error(<span class="c-str">'HLS lỗi nghiêm trọng:'</span>, data);
-    });
-  } <span class="c-key">else if</span> (video.canPlayType(<span class="c-str">'application/vnd.apple.mpegurl'</span>)) {
-    <span class="c-comment">// Safari — native HLS support</span>
-    video.src = m3u8Url;
-    video.play().catch(() =&gt; {});
-  } <span class="c-key">else</span> {
-    video.insertAdjacentHTML(<span class="c-str">'afterend'</span>,
-      <span class="c-str">'&lt;p&gt;Trình duyệt không hỗ trợ HLS.&lt;/p&gt;'</span>);
-  }
-&lt;/script&gt;</pre>
-        </div>
-        <div class="explain"><strong>hls.js vs video.js:</strong> hls.js là thư viện thuần HLS, nhỏ gọn hơn video.js (~150KB vs ~450KB). video.js đa năng hơn nhưng nặng hơn. Với yêu cầu đơn giản là phát HLS, hls.js là lựa chọn tối ưu. Safari đã hỗ trợ HLS native nên không cần thư viện.</div>
       </div>
     </div>
   </div>
 
-  <!-- PHASE 6 -->
-  <div class="phase" id="p6">
-    <div class="phase-header">
-      <div class="phase-num">PHASE 6</div>
-      <h2>Triển Khai Caddy & Mạng LAN</h2>
-      <div class="phase-week">Tuần 6</div>
+  <div class="step">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">📺</div>
+      <div class="step-name">5.2 — Template Player với hls.js + Subtitles <span class="new-badge">UPDATED</span></div>
+      <div class="step-toggle">▼</div>
     </div>
+    <div class="step-body">
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">films/templates/films/detail.html — Player section</span></div>
+        <pre><span class="c-key">&lt;!-- Seasons & Episode list --&gt;</span>
+{% <span class="c-key">if</span> movie.total_seasons > 1 %}
+&lt;select id=<span class="c-str">"season-select"</span> onchange=<span class="c-str">"location.href='?s='+this.value+'&tap=1'"</span>&gt;
+  {% <span class="c-key">for</span> s_num, eps <span class="c-key">in</span> seasons.items %}
+  &lt;option value=<span class="c-str">"{{ s_num }}"</span>&gt;Mùa {{ s_num }}&lt;/option&gt;
+  {% <span class="c-key">endfor</span> %}
+&lt;/select&gt;
+{% <span class="c-key">endif</span> %}
 
-    <div class="step open">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">📦</div>
-        <div class="step-name">6.1 — Chuẩn Bị Files Tĩnh</div>
-        <div class="step-toggle">▼</div>
+<span class="c-comment">&lt;!-- Video player --&gt;</span>
+&lt;video id=<span class="c-str">"player"</span> controls style=<span class="c-str">"width:100%"</span>
+  poster=<span class="c-str">"{{ current.thumbnail_path }}"</span>&gt;
+
+  <span class="c-comment">&lt;!-- Phụ đề đa ngôn ngữ (track elements) --&gt;</span>
+  {% <span class="c-key">for</span> sub <span class="c-key">in</span> current.subtitles.all %}
+  &lt;track kind=<span class="c-str">"subtitles"</span>
+    src=<span class="c-str">"{{ sub.sub_path }}"</span>
+    srclang=<span class="c-str">"{{ sub.language_code }}"</span>
+    label=<span class="c-str">"{{ sub.language_label }}"</span>
+    {% if sub.is_default %}default{% endif %}&gt;
+  {% <span class="c-key">endfor</span> %}
+&lt;/video&gt;
+
+<span class="c-comment">&lt;!-- Episode buttons --&gt;</span>
+{% <span class="c-key">for</span> ep <span class="c-key">in</span> seasons|get_season:current.season_number %}
+&lt;a href=<span class="c-str">"?s={{ current.season_number }}&tap={{ ep.episode_number }}"</span>
+   class=<span class="c-str">"{% if ep == current %}active{% endif %}"</span>&gt;
+  Tập {{ ep.episode_number }}
+&lt;/a&gt;
+{% <span class="c-key">endfor</span> %}
+
+<span class="c-comment">&lt;!-- hls.js (nhỏ gọn ~150KB, thuần HLS) --&gt;</span>
+&lt;script src=<span class="c-str">"https://cdn.jsdelivr.net/npm/hls.js@latest"</span>&gt;&lt;/script&gt;
+&lt;script&gt;
+  <span class="c-key">const</span> video   = document.getElementById(<span class="c-str">'player'</span>);
+  <span class="c-key">const</span> m3u8Url = <span class="c-str">"{{ current.m3u8_path }}"</span>;   <span class="c-comment">// ★ m3u8_path thay vì video_url</span>
+
+  <span class="c-key">if</span> (Hls.isSupported()) {
+    <span class="c-key">const</span> hls = <span class="c-key">new</span> Hls({ maxBufferLength: <span class="c-num">60</span>, maxMaxBufferLength: <span class="c-num">120</span> });
+    hls.loadSource(m3u8Url);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () =&gt; video.play().catch(() =&gt; {}));
+    hls.on(Hls.Events.ERROR, (_, data) =&gt; {
+      <span class="c-key">if</span> (data.fatal) console.error(<span class="c-str">'HLS lỗi:'</span>, data.type, data.details);
+    });
+  } <span class="c-key">else if</span> (video.canPlayType(<span class="c-str">'application/vnd.apple.mpegurl'</span>)) {
+    video.src = m3u8Url;   <span class="c-comment">// Safari — native HLS</span>
+  }
+&lt;/script&gt;</pre>
       </div>
-      <div class="step-body">
-        <div class="code-block">
-          <div class="code-label"><span>CMD</span></div>
-          <pre><span class="c-comment"># Gom tất cả CSS/JS của Django admin + app vào thư mục static/</span>
+      <div class="box info"><strong>hls.js vs video.js:</strong> hls.js thuần HLS, nhỏ hơn (~150KB vs ~450KB). Với yêu cầu chỉ phát HLS và subtitle .vtt, hls.js là lựa chọn tối ưu. Safari hỗ trợ HLS native — không cần thư viện.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PHASE 6 — CADDY
+════════════════════════════════════════════════════ -->
+<div class="section" id="p6">
+  <div class="section-header">
+    <div class="section-num">PHASE 6</div>
+    <h2>Triển Khai Caddy & Mạng LAN</h2>
+    <div class="section-week">Tuần 6</div>
+  </div>
+
+  <div class="step open">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">📦</div>
+      <div class="step-name">6.1 — Chuẩn bị Files Tĩnh</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">CMD</span></div>
+        <pre><span class="c-comment"># Gom CSS/JS vào thư mục static/</span>
 python manage.py collectstatic <span class="c-flag">--noinput</span>
 
-<span class="c-comment"># Kiểm tra kết nối database</span>
+<span class="c-comment"># Kiểm tra cấu hình production</span>
 python manage.py check <span class="c-flag">--deploy</span></pre>
-        </div>
       </div>
     </div>
+  </div>
 
-    <div class="step">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">🌍</div>
-        <div class="step-name">6.2 — Caddyfile Hoàn Chỉnh với Headers Bảo Mật</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <div class="code-block">
-          <div class="code-label"><span>C:\Caddy\Caddyfile</span></div>
-          <pre><span class="c-comment"># Thay 192.168.1.x bằng IP tĩnh của máy bạn</span>
+  <div class="step">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🌍</div>
+      <div class="step-name">6.2 — Caddyfile hoàn chỉnh với Security Headers</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">C:\Caddy\Caddyfile</span></div>
+        <pre><span class="c-comment"># Thay 192.168.1.x bằng IP tĩnh của máy bạn</span>
 localhost:80, 192.168.1.x:80 {
 
-    <span class="c-comment"># ── Headers bảo mật ★ MỚI ────────────────────────</span>
+    <span class="c-comment"># ── Security headers ───────────────────────────</span>
     header {
         X-Content-Type-Options  <span class="c-str">"nosniff"</span>
         X-Frame-Options         <span class="c-str">"SAMEORIGIN"</span>
         Referrer-Policy         <span class="c-str">"strict-origin-when-cross-origin"</span>
-        <span class="c-comment"># Tắt server signature</span>
         -Server
     }
 
-    <span class="c-comment"># ── Static files (CSS, JS, admin) ────────────────</span>
+    <span class="c-comment"># ── Static files (CSS, JS, fonts) ──────────────</span>
     route /static/* {
-        header Cache-Control <span class="c-str">"public, max-age=86400"</span>   <span class="c-comment"># Cache 1 ngày</span>
-        file_server {
-            root <span class="c-str">C:\Projects\my_movie_web</span>
-        }
+        header Cache-Control <span class="c-str">"public, max-age=86400"</span>
+        file_server { root <span class="c-str">C:\Projects\filmsite</span> }
     }
 
-    <span class="c-comment"># ── Media files (HLS .m3u8, .ts, poster) ─────────</span>
+    <span class="c-comment"># ── Media files (HLS, posters) ─────────────────</span>
     route /media/* {
-        <span class="c-comment"># HLS manifest (.m3u8): không cache để luôn fresh</span>
+        <span class="c-comment"># m3u8 manifest: không cache (có thể update tập mới)</span>
         @m3u8 path *.m3u8
         header @m3u8 Cache-Control <span class="c-str">"no-cache, no-store"</span>
 
-        <span class="c-comment"># File .ts: cache mạnh vì nội dung không đổi</span>
+        <span class="c-comment"># .ts segments: cache 7 ngày (nội dung bất biến)</span>
         @ts path *.ts
-        header @ts Cache-Control <span class="c-str">"public, max-age=604800"</span>  <span class="c-comment"># 7 ngày</span>
+        header @ts Cache-Control <span class="c-str">"public, max-age=604800"</span>
 
-        file_server {
-            root <span class="c-str">C:\Projects\my_movie_web</span>
-        }
+        <span class="c-comment"># .vtt subtitles: cache 1 ngày</span>
+        @vtt path *.vtt
+        header @vtt Cache-Control <span class="c-str">"public, max-age=86400"</span>
+
+        <span class="c-comment"># Ảnh poster/backdrop: cache 7 ngày</span>
+        @img path *.webp *.jpg *.png
+        header @img Cache-Control <span class="c-str">"public, max-age=604800"</span>
+
+        file_server { root <span class="c-str">C:\Projects\filmsite</span> }
     }
 
-    <span class="c-comment"># ── Django App (mọi request còn lại) ─────────────</span>
+    <span class="c-comment"># ── Django App ─────────────────────────────────</span>
     reverse_proxy localhost:8000 {
-        <span class="c-comment"># ★ MỚI: Header để Django nhận IP thật của client</span>
-        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-For   {remote_host}
         header_up X-Forwarded-Proto {scheme}
     }
 
-    <span class="c-comment"># ── Logging của Caddy ★ MỚI ──────────────────────</span>
+    <span class="c-comment"># ── Logging ────────────────────────────────────</span>
     log {
         output file <span class="c-str">C:\Caddy\access.log</span> {
             roll_size 10mb
@@ -1364,134 +2052,149 @@ localhost:80, 192.168.1.x:80 {
         format json
     }
 }</pre>
-        </div>
-        <div class="explain">
-          <strong>Tại sao .m3u8 không cache nhưng .ts thì cache 7 ngày?</strong> File .m3u8 là "manifest" — nó chứa danh sách và offset của các segment. Nếu cache manifest mà sau đó bạn thay đổi video, trình duyệt vẫn đọc bản cũ. File .ts là nội dung video thực sự — một khi đã encode xong, nó không bao giờ thay đổi, nên cache dài là an toàn và tăng hiệu suất đáng kể cho lần xem lại.
-        </div>
       </div>
+      <div class="box info"><strong>Tại sao .m3u8 không cache nhưng .ts thì cache 7 ngày?</strong> File .m3u8 là manifest — danh sách segment. Nếu cache manifest mà bạn thêm tập mới, trình duyệt vẫn đọc bản cũ. File .ts là nội dung video thực sự — một khi đã encode xong, không bao giờ thay đổi, cache mạnh an toàn và tăng hiệu suất đáng kể.</div>
     </div>
+  </div>
 
-    <div class="step">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">🖥️</div>
-        <div class="step-name">6.3 — Khởi Chạy Server & Tự Động Hóa Windows</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <div class="code-block">
-          <div class="code-label"><span>CMD — Chạy thủ công (để test)</span></div>
-          <pre><span class="c-comment"># Terminal 1: Chạy Django qua Waitress</span>
-cd C:\Projects\my_movie_web
+  <div class="step">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">🖥️</div>
+      <div class="step-name">6.3 — Khởi Chạy & Tự Động Hóa Windows</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">CMD — Chạy thủ công để test</span></div>
+        <pre><span class="c-comment"># Terminal 1: Django qua Waitress</span>
+cd C:\Projects\filmsite
 venv\Scripts\activate
-waitress-serve <span class="c-flag">--port=8000</span> <span class="c-flag">--threads=8</span> core.wsgi:application
+waitress-serve <span class="c-flag">--port=8000</span> <span class="c-flag">--threads=8</span> config.wsgi:application   <span class="c-comment"># ★ 'config' thay vì 'core'</span>
 
-<span class="c-comment"># Terminal 2: Chạy Caddy</span>
+<span class="c-comment"># Terminal 2: Caddy</span>
 cd C:\Caddy
 caddy run</pre>
-        </div>
-        <div class="code-block">
-          <div class="code-label"><span>PowerShell — Đăng ký Task Scheduler để tự động chạy khi khởi động Windows</span></div>
-          <pre><span class="c-comment"># Script batch cho Waitress: C:\Projects\start_django.bat</span>
+      </div>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">PowerShell — Task Scheduler tự khởi động khi Windows bật</span></div>
+        <pre><span class="c-comment"># File: C:\Projects\start_django.bat</span>
 <span class="c-str">@echo off
-cd C:\Projects\my_movie_web
+cd C:\Projects\filmsite
 call venv\Scripts\activate.bat
-waitress-serve --port=8000 --threads=8 core.wsgi:application</span>
+waitress-serve --port=8000 --threads=8 config.wsgi:application</span>
 
-<span class="c-comment"># Đăng ký Task Scheduler qua PowerShell (chạy với quyền Admin)</span>
-$action = New-ScheduledTaskAction -Execute <span class="c-str">"C:\Projects\start_django.bat"</span>
-$trigger = New-ScheduledTaskTrigger -AtStartup
-$settings = New-ScheduledTaskSettingsSet -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
-Register-ScheduledTask -TaskName <span class="c-str">"MovieWeb-Django"</span> -Action $action -Trigger $trigger -Settings $settings -RunLevel Highest
+<span class="c-comment"># Đăng ký Task Scheduler (chạy PowerShell với quyền Admin)</span>
+$action  = New-ScheduledTaskAction -Execute <span class="c-str">"C:\Projects\start_django.bat"</span>
+$action2 = New-ScheduledTaskAction -Execute <span class="c-str">"C:\Caddy\caddy.exe"</span> `
+           -Argument <span class="c-str">"run"</span> -WorkingDirectory <span class="c-str">"C:\Caddy"</span>
+$trigger  = New-ScheduledTaskTrigger -AtStartup
+$settings = New-ScheduledTaskSettingsSet -RestartCount 3 `
+            -RestartInterval (New-TimeSpan -Minutes 1)
 
-<span class="c-comment"># Tương tự cho Caddy</span>
-$action2 = New-ScheduledTaskAction -Execute <span class="c-str">"C:\Caddy\caddy.exe"</span> -Argument <span class="c-str">"run"</span> -WorkingDirectory <span class="c-str">"C:\Caddy"</span>
-Register-ScheduledTask -TaskName <span class="c-str">"MovieWeb-Caddy"</span> -Action $action2 -Trigger $trigger -Settings $settings -RunLevel Highest</pre>
-        </div>
-        <div class="explain"><strong>Task Scheduler vs chạy tay:</strong> Task Scheduler đảm bảo cả Waitress và Caddy tự khởi động khi Windows bật, và tự restart nếu crash. <code>-RestartCount 3</code> = thử restart 3 lần trước khi bỏ cuộc.</div>
-
-        <p class="section-heading">Cấu Hình Tường Lửa & Router</p>
-        <div class="code-block">
-          <div class="code-label"><span>PowerShell — Mở port 80 trong Windows Firewall</span></div>
-          <pre><span class="c-comment"># Chạy với quyền Admin</span>
-New-NetFirewallRule <span class="c-flag">-DisplayName</span> <span class="c-str">"MovieWeb HTTP"</span> `
-    <span class="c-flag">-Direction</span> Inbound `
-    <span class="c-flag">-Protocol</span> TCP `
-    <span class="c-flag">-LocalPort</span> <span class="c-num">80</span> `
-    <span class="c-flag">-Action</span> Allow `
-    <span class="c-flag">-Profile</span> Private          <span class="c-comment"># Chỉ áp dụng trong mạng LAN Private</span></pre>
-        </div>
-        <ul class="checklist">
-          <li>Vào Router Admin (thường 192.168.1.1) → DHCP → Reservation → gán IP tĩnh cho máy tính dựa trên MAC address</li>
-          <li>Ghi lại IP tĩnh đó (ví dụ 192.168.1.100) và cập nhật vào Caddyfile, <code>.env</code> ALLOWED_HOSTS</li>
-          <li>Từ điện thoại/máy khác trong cùng WiFi, mở browser vào <code>http://192.168.1.100</code></li>
-        </ul>
+Register-ScheduledTask -TaskName <span class="c-str">"FilmSite-Django"</span> -Action $action `
+    -Trigger $trigger -Settings $settings -RunLevel Highest
+Register-ScheduledTask -TaskName <span class="c-str">"FilmSite-Caddy"</span> -Action $action2 `
+    -Trigger $trigger -Settings $settings -RunLevel Highest</pre>
       </div>
+      <p class="sh">Cấu hình mạng LAN</p>
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">PowerShell — Mở port 80 trong Windows Firewall</span></div>
+        <pre>New-NetFirewallRule <span class="c-flag">-DisplayName</span> <span class="c-str">"FilmSite HTTP"</span> `
+    <span class="c-flag">-Direction</span> Inbound <span class="c-flag">-Protocol</span> TCP `
+    <span class="c-flag">-LocalPort</span> <span class="c-num">80</span> <span class="c-flag">-Action</span> Allow <span class="c-flag">-Profile</span> Private</pre>
+      </div>
+      <ul class="checklist">
+        <li>Vào Router Admin (192.168.1.1) → DHCP → Reservation → gán IP tĩnh cho máy theo MAC address</li>
+        <li>Ghi IP tĩnh (vd: 192.168.1.100) → cập nhật vào Caddyfile và <code>.env ALLOWED_HOSTS</code></li>
+        <li>Từ điện thoại trong cùng WiFi: mở browser → <code>http://192.168.1.100</code></li>
+      </ul>
     </div>
   </div>
-
-  <!-- PHASE 7 - BONUS -->
-  <div class="phase" id="p7">
-    <div class="phase-header">
-      <div class="phase-num">★ BONUS</div>
-      <h2>Bảo Trì & Backup</h2>
-    </div>
-
-    <div class="step">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">💾</div>
-        <div class="step-name">Backup Database Tự Động</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <div class="code-block">
-          <div class="code-label"><span>backup_db.bat — Đặt lịch chạy hàng ngày qua Task Scheduler</span></div>
-          <pre><span class="c-key">@echo off</span>
-<span class="c-key">SET</span> PGPASSWORD=your_password
-<span class="c-key">SET</span> BACKUP_DIR=C:\Backups\movie_db
-<span class="c-key">SET</span> DATE_STR=%date:~10,4%-%date:~4,2%-%date:~7,2%
-
-<span class="c-key">IF NOT EXIST</span> "%BACKUP_DIR%" <span class="c-key">MKDIR</span> "%BACKUP_DIR%"
-
-<span class="c-comment">rem Tạo backup</span>
-<span class="c-str">"C:\Program Files\PostgreSQL\16\bin\pg_dump.exe"</span> ^
-    <span class="c-flag">-U</span> movie_user <span class="c-flag">-d</span> movie_db ^
-    <span class="c-flag">-F c</span> ^
-    <span class="c-flag">-f</span> "%BACKUP_DIR%\movie_db_%DATE_STR%.backup"
-
-<span class="c-comment">rem Xóa backup cũ hơn 7 ngày</span>
-forfiles /P "%BACKUP_DIR%" /S /M *.backup /D -7 /C "cmd /c del @path" 2>nul
-<span class="c-key">echo</span> Backup xong: movie_db_%DATE_STR%.backup</pre>
-        </div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-title" onclick="toggle(this)">
-        <div class="step-icon">📊</div>
-        <div class="step-name">Checklist Kiểm Tra Hệ Thống</div>
-        <div class="step-toggle">▼</div>
-      </div>
-      <div class="step-body">
-        <ul class="checklist">
-          <li>PostgreSQL service đang chạy (Services.msc)</li>
-          <li>Task "MovieWeb-Django" đang Active trong Task Scheduler</li>
-          <li>Task "MovieWeb-Caddy" đang Active trong Task Scheduler</li>
-          <li>Mở <code>http://localhost</code> từ máy server → trang chủ hiển thị</li>
-          <li>Mở <code>http://192.168.1.x</code> từ điện thoại → trang chủ hiển thị</li>
-          <li>Thêm 1 file .mp4 vào raw_videos/, chạy processor.py → video xuất hiện trên site</li>
-          <li>Kiểm tra <code>logs/django.log</code> và <code>C:\Caddy\access.log</code> không có lỗi</li>
-          <li>Backup chạy mỗi ngày, file .backup xuất hiện trong C:\Backups\</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
 </div>
 
+<!-- ═══════════════════════════════════════════════
+     PHASE 7 — BẢO TRÌ
+════════════════════════════════════════════════════ -->
+<div class="section" id="p7">
+  <div class="section-header">
+    <div class="section-num">★ BONUS</div>
+    <h2>Bảo Trì & Backup</h2>
+  </div>
+
+  <div class="step">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">💾</div>
+      <div class="step-name">Backup Database Tự Động</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <div class="code-block">
+        <div class="code-label"><span class="cl-name">backup_db.bat — Chạy hàng ngày qua Task Scheduler</span></div>
+        <pre><span class="c-key">@echo off</span>
+<span class="c-key">SET</span> PGPASSWORD=your_password
+<span class="c-key">SET</span> BACKUP_DIR=C:\Backups\filmsite
+<span class="c-key">SET</span> DATE_STR=%date:~10,4%-%date:~4,2%-%date:~7,2%
+
+<span class="c-key">IF NOT EXIST</span> <span class="c-str">"%BACKUP_DIR%"</span> <span class="c-key">MKDIR</span> <span class="c-str">"%BACKUP_DIR%"</span>
+
+<span class="c-str">"C:\Program Files\PostgreSQL\16\bin\pg_dump.exe"</span> ^
+    <span class="c-flag">-U</span> film_user <span class="c-flag">-d</span> filmsite_db ^
+    <span class="c-flag">-F c</span> ^
+    <span class="c-flag">-f</span> <span class="c-str">"%BACKUP_DIR%\filmsite_%DATE_STR%.backup"</span>
+
+<span class="c-comment">rem Xóa backup cũ hơn 7 ngày</span>
+forfiles /P <span class="c-str">"%BACKUP_DIR%"</span> /S /M *.backup /D -7 /C "cmd /c del @path" 2>nul
+<span class="c-key">echo</span> Backup done: filmsite_%DATE_STR%.backup</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-title" onclick="toggle(this)">
+      <div class="step-icon">📊</div>
+      <div class="step-name">Checklist Kiểm Tra Hệ Thống</div>
+      <div class="step-toggle">▼</div>
+    </div>
+    <div class="step-body">
+      <ul class="checklist">
+        <li>PostgreSQL service đang chạy (Services.msc)</li>
+        <li>Task "FilmSite-Django" Active trong Task Scheduler</li>
+        <li>Task "FilmSite-Caddy" Active trong Task Scheduler</li>
+        <li>Mở <code>http://localhost</code> từ máy server → trang chủ hiển thị</li>
+        <li>Mở <code>http://192.168.1.x</code> từ điện thoại → trang chủ hiển thị</li>
+        <li>Drop file <code>ten-phim_tap-1.mp4</code> vào raw_videos/ → chạy processor.py → phim xuất hiện</li>
+        <li>Player phát được HLS, chọn được phụ đề</li>
+        <li>Kiểm tra <code>logs/django.log</code> và <code>C:\Caddy\access.log</code></li>
+        <li>Backup chạy mỗi ngày, file .backup xuất hiện trong C:\Backups\</li>
+        <li>Django Admin (<code>/admin</code>) hiển thị đầy đủ 14 models</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrapper -->
+</div><!-- /main -->
+
 <script>
-  function toggle(el) {
-    el.closest('.step').classList.toggle('open');
-  }
+function toggle(el) {
+  el.closest('.step').classList.toggle('open');
+}
+
+// Highlight active nav item on scroll
+const sections = document.querySelectorAll('.section[id]');
+const navItems = document.querySelectorAll('.nav-item');
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navItems.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id);
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+sections.forEach(s => observer.observe(s));
 </script>
 
 </body>
