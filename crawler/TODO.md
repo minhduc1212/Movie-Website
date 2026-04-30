@@ -26,7 +26,7 @@ Consumet API
 
 Yarrlist
 
-https://www.reddit.com/r/YouShouldKnow/comments/1hll9nb/comment/m8ndhp0/
+https://www.reddit.com/r/YouShouldKnow/comments/1hll9nb/ysk_theres_a_free_streaming_site_for_movies_and/
 
 1337x
 The Pirate Bay (TPB)
