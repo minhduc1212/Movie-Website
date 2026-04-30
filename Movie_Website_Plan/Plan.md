@@ -48,7 +48,7 @@
        │                       │
        ▼                       ▼
 ┌──────────────┐    ┌──────────────────────┐
-│  CDN / Media │    │   Django (Gunicorn)  │
+│  CDN / Media │    │   Django (Waitress)  │
 │  HLS streams │    │   REST API + Views   │
 │  Posters/img │    │   DRF Serializers    │
 └──────────────┘    └──────┬───────────────┘
@@ -73,7 +73,7 @@
 User gõ URL
   → Caddy nhận request
     → Check static/media → serve trực tiếp (không qua Django)
-    → Còn lại → forward tới Gunicorn:8000
+    → Còn lại → forward tới Waitress:8000
       → Django Router
         → REST API (/api/v1/...) → DRF View → Redis Cache? → DB → Response JSON
         → Web Views (/...)       → Django View → Template → Response HTML
@@ -152,7 +152,7 @@ dependencies = [
     "django-silk>=5.3",              # API profiling (dev)
 
     # ── WSGI Server ──────────────────────────────
-    "gunicorn>=23.0",
+    "waitress>=3.0",             # Windows-compatible WSGI server
 
     # ── Monitoring ───────────────────────────────
     "django-prometheus>=2.3",
@@ -370,7 +370,7 @@ C:\Projects\filmsite\
 │       └── dashboards/
 │
 └── scripts/
-    ├── start_gunicorn.bat
+    ├── start_waitress.bat
     ├── start_celery.bat
     ├── start_celery_beat.bat
     ├── backup_db.bat
@@ -2542,33 +2542,29 @@ sentry_sdk.init(
 
 ## 20. Deployment & Automation
 
-### 20.1 Gunicorn (thay Waitress)
+### 20.1 Waitress — WSGI Server (Windows)
 
-```python
-# gunicorn.conf.py
-import multiprocessing
-
-bind            = '127.0.0.1:8000'
-workers         = multiprocessing.cpu_count() * 2 + 1
-worker_class    = 'sync'
-worker_connections = 1000
-timeout         = 30
-keepalive       = 5
-max_requests    = 1000       # Restart worker sau 1000 requests (chống memory leak)
-max_requests_jitter = 100
-preload_app     = True
-accesslog       = 'logs/access.log'
-errorlog        = 'logs/gunicorn.log'
-loglevel        = 'info'
-```
+> **Lý do dùng Waitress thay Gunicorn:** Gunicorn dùng `os.fork()` — không hỗ trợ trên Windows. Waitress là WSGI server thuần Python, chạy native trên Windows, hiệu năng tốt cho local/LAN deployment.
 
 ```powershell
-# scripts/start_gunicorn.bat
+# scripts/start_waitress.bat
 @echo off
 cd C:\Projects\filmsite
-call .venv\Scripts\activate.bat
-uv run gunicorn config.wsgi:application -c gunicorn.conf.py
+uv run waitress-serve ^
+    --host=127.0.0.1 ^
+    --port=8000 ^
+    --threads=8 ^
+    --connection-limit=1000 ^
+    --channel-timeout=30 ^
+    --log-socket-errors=true ^
+    config.wsgi:application
 ```
+
+> **Giải thích tham số:**
+> - `--threads=8` — số thread xử lý song song (≈ CPU cores × 2)
+> - `--connection-limit=1000` — tối đa 1000 kết nối đồng thời
+> - `--channel-timeout=30` — timeout 30 giây per request
+> - Không cần file config riêng như gunicorn.conf.py
 
 ### 20.2 Task Scheduler — Windows
 
@@ -2576,9 +2572,9 @@ uv run gunicorn config.wsgi:application -c gunicorn.conf.py
 # scripts/setup_tasks.ps1 (chạy với quyền Admin)
 $base = "C:\Projects\filmsite"
 
-# Django (Gunicorn)
-$a1 = New-ScheduledTaskAction -Execute "$base\scripts\start_gunicorn.bat"
-Register-ScheduledTask -TaskName "FilmSite-Gunicorn" `
+# Django (Waitress)
+$a1 = New-ScheduledTaskAction -Execute "$base\scripts\start_waitress.bat"
+Register-ScheduledTask -TaskName "FilmSite-Waitress" `
     -Action $a1 `
     -Trigger (New-ScheduledTaskTrigger -AtStartup) `
     -Settings (New-ScheduledTaskSettingsSet -RestartCount 5 -RestartInterval (New-TimeSpan -Minutes 2)) `
