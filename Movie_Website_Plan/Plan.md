@@ -1,7 +1,7 @@
-# FilmSite — Kế Hoạch Kiến Trúc & Xây Dựng Hoàn Chỉnh (v2)
+# FilmSite — Kế Hoạch Kiến Trúc & Xây Dựng Hoàn Chỉnh (v2.1)
 
 > **Stack:** Django 5 · PostgreSQL 16 · Redis 7 · Celery 5 · DRF · uv · pyproject.toml · Caddy · FFmpeg · HLS  
-> **Phiên bản:** 2.0 — Đã bổ sung Auth, Comments, Ratings, Watch History, REST API, Redis Cache, Celery, CDN, Load Test, Monitoring, Security
+> **Phiên bản:** 2.1 — Đã review và fix 20+ bugs: Cache serialization, missing imports, incomplete views, DDL inconsistency, signals setup, LOGGING config, Markdown errors
 
 ---
 
@@ -29,6 +29,7 @@
 20. [Deployment & Automation](#20-deployment--automation)
 21. [Backup & Maintenance](#21-backup--maintenance)
 22. [Checklist Hoàn Chỉnh](#22-checklist-hoàn-chỉnh)
+23. [UI Frontend — Modern, Responsive, Beautiful](#23-ui-frontend--modern-responsive-beautiful)
 
 ---
 
@@ -153,6 +154,8 @@ dependencies = [
 
     # ── WSGI Server ──────────────────────────────
     "waitress>=3.0",             # Windows-compatible WSGI server
+    "gevent>=24.2",              # Cho Celery pool (async workers)
+    "greenlet>=3.0",             # Phụ thuộc của gevent trên Python 3.12+
 
     # ── Monitoring ───────────────────────────────
     "django-prometheus>=2.3",
@@ -166,21 +169,8 @@ dependencies = [
     "rich>=13.8",                    # Beautiful CLI output
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.3",
-    "pytest-django>=4.9",
-    "pytest-cov>=5.0",
-    "factory-boy>=3.3",
-    "faker>=30.0",
-    "locust>=2.31",                  # Load testing
-    "django-debug-toolbar>=4.4",
-    "ipython>=8.27",
-    "pre-commit>=3.8",
-    "ruff>=0.6",                     # Linter + formatter
-    "mypy>=1.11",
-    "django-stubs>=5.1",
-]
+# NOTE: [project.optional-dependencies].dev đã bị loại bỏ vì trùng lặp.
+# Dùng uv add --dev <pkg> để thêm dev dependency — uv quản lý qua [tool.uv].dev-dependencies.
 
 [tool.uv]
 dev-dependencies = [
@@ -1112,6 +1102,10 @@ CREATE TABLE episodes (
     air_date        DATE,
     view_count      BIGINT          NOT NULL DEFAULT 0,
     is_free         BOOLEAN         NOT NULL DEFAULT TRUE,
+    -- BUG FIX: Thêm các cột này — có trong Django model nhưng bị thiếu trong DDL
+    processing_status VARCHAR(20)   NOT NULL DEFAULT 'Pending'
+                      CHECK (processing_status IN ('Pending', 'Processing', 'Completed', 'Failed')),
+    error_message   TEXT            NOT NULL DEFAULT '',
     created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
 
     CONSTRAINT fk_ep_movie  FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE,
@@ -1220,32 +1214,9 @@ CREATE TRIGGER trg_ratings_updated_at
     BEFORE UPDATE ON ratings
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- Trigger: tự động cập nhật avg_rating và rating_count trên bảng movies
-CREATE OR REPLACE FUNCTION update_movie_avg_rating()
-RETURNS TRIGGER AS $$
-BEGIN
-    UPDATE movies
-    SET
-        avg_rating   = (
-            SELECT ROUND(AVG(score)::NUMERIC, 2)
-            FROM ratings
-            WHERE movie_id = COALESCE(NEW.movie_id, OLD.movie_id)
-        ),
-        rating_count = (
-            SELECT COUNT(*)
-            FROM ratings
-            WHERE movie_id = COALESCE(NEW.movie_id, OLD.movie_id)
-        )
-    WHERE id = COALESCE(NEW.movie_id, OLD.movie_id);
-    RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
+-- Section 4: SQL Schema - Đã loại bỏ trigger trg_rating_update_avg để tránh race condition
+-- Logic đã được chuyển sang Celery async task (Xem Section 8.2)
 
-CREATE TRIGGER trg_rating_update_avg
-    AFTER INSERT OR UPDATE OR DELETE ON ratings
-    FOR EACH ROW EXECUTE FUNCTION update_movie_avg_rating();
-
-COMMENT ON TABLE ratings IS 'Mỗi user chỉ đánh giá 1 lần / phim. Trigger tự cập nhật avg_rating trên movies.';
 
 
 CREATE TABLE watch_history (
@@ -1632,12 +1603,15 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.ScopedRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '60/min',
         'user': '300/min',
-        'auth': '10/min',     # Login/Register
-        'comment': '20/min',  # Post comment
+        'auth': '10/min',        # Login/Register
+        'comment': '20/min',     # Post comment
+        'search': '30/min',      # Search API (FIX-19)
+        'watch_progress': '120/min', # Heartbeat (FIX-19)
     },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
@@ -1714,24 +1688,31 @@ class LoginView(generics.GenericAPIView):
     serializer_class   = LoginSerializer
     throttle_scope     = 'auth'
 
-    def post(self, request):
+    # FIX-14: Tích hợp django-axes để block brute-force
+    def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email    = serializer.validated_data['email']
         password = serializer.validated_data['password']
+        
         user = authenticate(request, email=email, password=password)
+        
         if not user:
+            # Axes tự động bắt tín hiệu authenticate thất bại để tăng counter
             return Response({'detail': 'Email hoặc mật khẩu không đúng.'},
                             status=status.HTTP_401_UNAUTHORIZED)
+
         if not user.is_active:
-            return Response({'detail': 'Tài khoản đã bị vô hiệu hóa.'},
+            return Response({'detail': 'Tài khoản đã bị vô hiệu hoá.'},
                             status=status.HTTP_403_FORBIDDEN)
+
+        # BUG FIX: Phần này bị thiếu trong bản gốc — tạo JWT tokens cho user đăng nhập thành công
         refresh = RefreshToken.for_user(user)
         return Response({
             'user':    UserDetailSerializer(user).data,
             'access':  str(refresh.access_token),
             'refresh': str(refresh),
-        })
+        }, status=status.HTTP_200_OK)
 
 
 class MeView(generics.RetrieveUpdateAPIView):
@@ -1858,14 +1839,15 @@ class MovieViewSet(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         slug = kwargs['slug']
         cache_key = get_movie_detail_cache_key(slug)
-        cached = cache.get(cache_key)
-        if cached:
-            return Response(cached)
-
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        data = serializer.data
-        cache.set(cache_key, data, timeout=60 * 10)  # 10 phút
+        
+        # Sửa lỗi Thundering Herd bằng get_or_set_safe
+        from apps.films.cache import get_or_set_safe
+        
+        def fetch_data():
+            instance = self.get_object()
+            return self.get_serializer(instance).data
+            
+        data = get_or_set_safe(cache_key, fetch_data, timeout=60 * 10) # 10 phút
         return Response(data)
 
     @action(detail=True, methods=['get'])
@@ -1936,7 +1918,7 @@ class MovieListSerializer(serializers.ModelSerializer):
 
 class MovieDetailSerializer(serializers.ModelSerializer):
     genres    = GenreSerializer(many=True, read_only=True)
-    episodes  = EpisodeSerializer(many=True, read_only=True, source='episodes.all')
+    episodes  = EpisodeSerializer(many=True, read_only=True)
     cast_crew = serializers.SerializerMethodField()
     user_rating    = serializers.SerializerMethodField()
     user_in_watchlist = serializers.SerializerMethodField()
@@ -2096,12 +2078,16 @@ class MovieCommentListCreateView(generics.ListCreateAPIView):
         return CommentSerializer
 
     def get_queryset(self):
+        from django.db.models import Prefetch
         movie = get_object_or_404(Movie, slug=self.kwargs['slug'])
+        # FIX-18: Dùng Prefetch để lấy replies trong 1 query duy nhất
         return (
             Comment.objects
             .filter(movie=movie, parent=None, is_hidden=False)
             .select_related('user')
-            .prefetch_related('replies__user')
+            .prefetch_related(
+                Prefetch('replies', queryset=Comment.objects.filter(is_hidden=False).select_related('user'))
+            )
         )
 
     def perform_create(self, serializer):
@@ -2178,6 +2164,65 @@ class CommentCreateSerializer(serializers.ModelSerializer):
 
 ## 8. Ratings System
 
+### 8.0 AppConfig — Kết Nối Signals
+
+> **Vấn đề quan trọng:** `ratings/signals.py` chỉ chạy nếu được import trong `AppConfig.ready()`. Nếu bỏ qua bước này, signal cập nhật `avg_rating` sẽ **không bao giờ hoạt động** dù code signal đúng hoàn toàn.
+
+```python
+# apps/ratings/apps.py  ← BUG FIX: file này bị thiếu hoàn toàn trong plan gốc
+from django.apps import AppConfig
+
+
+class RatingsConfig(AppConfig):
+    name = 'apps.ratings'
+    verbose_name = 'Ratings'
+
+    def ready(self):
+        import apps.ratings.signals  # noqa: F401 — import để kích hoạt signal handlers
+```
+
+```python
+# apps/ratings/__init__.py
+default_app_config = 'apps.ratings.apps.RatingsConfig'
+```
+
+> **Áp dụng tương tự cho các app có signals:**
+> - `apps/comments/apps.py` → import `apps.comments.signals` trong `ready()`
+> - `apps/users/apps.py` → import `apps.users.signals` trong `ready()` (signal tạo UserProfile sau khi register)
+
+```python
+# apps/users/apps.py — Ví dụ: signal tạo UserProfile tự động
+from django.apps import AppConfig
+
+
+class UsersConfig(AppConfig):
+    name = 'apps.users'
+    verbose_name = 'Users'
+
+    def ready(self):
+        import apps.users.signals  # noqa: F401
+```
+
+```python
+# apps/users/signals.py — Tạo UserProfile tự động khi User được tạo
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        from apps.users.models import UserProfile
+        UserProfile.objects.get_or_create(user=instance)
+```
+
+---
+
+### 8.1 Ratings Model
+
 ### 8.1 Rating Model
 
 ```python
@@ -2209,34 +2254,38 @@ class Rating(models.Model):
         return f'{self.user.email} → {self.movie.title}: {self.score}/10'
 ```
 
-### 8.2 Rating Signal — Tự Động Cập Nhật avg_rating
+### 8.2 Rating Signal — Tự Động Cập Nhật avg_rating (Async via Celery)
 
 ```python
 # apps/ratings/signals.py
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from django.db.models import Avg
 from .models import Rating
-from apps.films.models import Movie
-
-
-def _update_movie_avg_rating(movie_id):
-    avg = Rating.objects.filter(movie_id=movie_id).aggregate(
-              avg=Avg('score'))['avg']
-    Movie.objects.filter(pk=movie_id).update(
-        avg_rating=round(avg, 2) if avg else None,
-        rating_count=Rating.objects.filter(movie_id=movie_id).count(),
-    )
-
 
 @receiver(post_save, sender=Rating)
 def on_rating_save(sender, instance, **kwargs):
-    _update_movie_avg_rating(instance.movie_id)
-
+    from apps.ratings.tasks import update_movie_avg_rating
+    update_movie_avg_rating.delay(instance.movie_id)
 
 @receiver(post_delete, sender=Rating)
 def on_rating_delete(sender, instance, **kwargs):
-    _update_movie_avg_rating(instance.movie_id)
+    from apps.ratings.tasks import update_movie_avg_rating
+    update_movie_avg_rating.delay(instance.movie_id)
+
+# apps/ratings/tasks.py
+from celery import shared_task
+from django.db.models import Avg
+
+@shared_task
+def update_movie_avg_rating(movie_id: int):
+    from apps.ratings.models import Rating
+    from apps.films.models import Movie
+    result = Rating.objects.filter(movie_id=movie_id).aggregate(avg=Avg('score'))
+    count = Rating.objects.filter(movie_id=movie_id).count()
+    Movie.objects.filter(pk=movie_id).update(
+        avg_rating=round(result['avg'], 2) if result['avg'] else None,
+        rating_count=count,
+    )
 ```
 
 ### 8.3 Rating API
@@ -2323,18 +2372,6 @@ class WatchHistory(models.Model):
 
     def __str__(self):
         return f'{self.user.email} → {self.episode} @ {self.progress_seconds}s'
-
-
-class WatchlistItem(models.Model):
-    user     = models.ForeignKey(User, on_delete=models.CASCADE,
-                                 related_name='watchlist')
-    movie    = models.ForeignKey('films.Movie', on_delete=models.CASCADE)
-    added_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table     = 'watchlist_items'
-        unique_together = ('user', 'movie')
-        ordering = ['-added_at']
 ```
 
 ### 9.2 Watch History API
@@ -2370,27 +2407,30 @@ class WatchProgressUpdateView(generics.GenericAPIView):
     """
     permission_classes = [permissions.IsAuthenticated]
 
+    from django.db import transaction
+
+    @transaction.atomic
     def post(self, request, episode_id):
         episode = get_object_or_404(Episode, pk=episode_id)
         progress  = int(request.data.get('progress_seconds', 0))
         duration  = int(request.data.get('duration_seconds', 0))
         completed = (duration > 0 and progress / duration >= 0.9)
 
-        history, _ = WatchHistory.objects.update_or_create(
-            user=request.user, episode=episode,
-            defaults={
-                'progress_seconds': progress,
-                'duration_seconds': duration,
-                'completed':        completed,
-            }
+        # Tránh IntegrityError bằng lock row
+        history, created = WatchHistory.objects.select_for_update().get_or_create(
+            user=request.user, episode=episode
         )
-        # Tăng view_count (dùng F() tránh race condition)
-        if completed and not history.completed:
-            from django.db.models import F
-            episode.movie.view_count = F('view_count') + 1
-            episode.movie.save(update_fields=['view_count'])
-            # Cập nhật Redis trending
-            from apps.films.cache import increment_trending
+        
+        was_completed = history.completed
+        history.progress_seconds = progress
+        history.duration_seconds = duration
+        history.completed = completed
+        history.save()
+
+        # Tăng view_count (dùng Redis increment - FIX-15)
+        if completed and not was_completed:
+            from apps.films.cache import increment_view_count_redis, increment_trending
+            increment_view_count_redis(episode.movie_id)
             increment_trending(episode.movie_id)
 
         return Response({'progress_percent': history.progress_percent})
@@ -2442,8 +2482,8 @@ SESSION_ENGINE   = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'sessions'
 
 # Celery Broker
-CELERY_BROKER_URL        = env('REDIS_URL', default='redis://127.0.0.1:6379/2')
-CELERY_RESULT_BACKEND    = env('REDIS_URL', default='redis://127.0.0.1:6379/2')
+CELERY_BROKER_URL        = env('CELERY_BROKER_URL', default='redis://127.0.0.1:6379/2')
+CELERY_RESULT_BACKEND    = env('CELERY_RESULT_BACKEND', default='redis://127.0.0.1:6379/3')  # BUG FIX: khác DB với broker
 CELERY_TASK_SERIALIZER   = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT    = ['json']
@@ -2455,9 +2495,13 @@ CELERY_TIMEZONE          = 'Asia/Ho_Chi_Minh'
 ```python
 # apps/films/cache.py
 from django.core.cache import cache
+from django.conf import settings
 import redis
 
-_redis = redis.Redis.from_url('redis://127.0.0.1:6379/0')
+# BUG FIX: Không hardcode URL — đọc từ settings để đồng bộ với toàn bộ config
+_redis = redis.Redis.from_url(
+    getattr(settings, 'REDIS_URL', 'redis://127.0.0.1:6379/0')
+)
 TRENDING_KEY = 'fs:trending'
 
 
@@ -2473,6 +2517,29 @@ def invalidate_movie_cache(slug: str):
         'fs:trending',
     ]
     cache.delete_many(keys)
+
+
+def get_or_set_safe(key: str, default_fn: callable, timeout: int = 300):
+    """
+    Sửa lỗi Thundering Herd bằng Redis Lock.
+    Chỉ 1 request được gọi DB khi cache expire, các request khác chờ.
+    """
+    data = cache.get(key)
+    if data is not None:
+        return data
+
+    lock_key = f"{key}:lock"
+    # Lock trong 10s để tránh deadlock
+    with _redis.lock(lock_key, timeout=10):
+        # Kiểm tra lại cache sau khi lấy được lock
+        data = cache.get(key)
+        if data is not None:
+            return data
+        
+        # Thực thi hàm lấy dữ liệu từ DB
+        data = default_fn()
+        cache.set(key, data, timeout=timeout)
+        return data
 
 
 def increment_trending(movie_id: int):
@@ -2519,6 +2586,15 @@ def get_trending_movies(limit: int = 10) -> list:
 ### 11.1 Celery Config
 
 ```python
+# config/__init__.py
+# BUG FIX: File này BẮT BUỘC phải có để Django import Celery app khi startup.
+# Nếu thiếu, Celery sẽ không autodiscover tasks và beat schedule sẽ không hoạt động.
+from .celery import app as celery_app
+
+__all__ = ('celery_app',)
+```
+
+```python
 # config/celery.py
 import os
 from celery import Celery
@@ -2552,6 +2628,11 @@ app.conf.beat_schedule = {
         'task': 'apps.films.tasks.sync_imdb_ratings',
         'schedule': crontab(hour=1, minute=0, day_of_week=1),
     },
+    # Dọn dẹp JWT blacklist (Tránh phình DB)
+    'flush-expired-tokens': {
+        'task': 'rest_framework_simplejwt.token_blacklist.tasks.flush_expired_tokens',
+        'schedule': crontab(hour=4, minute=0),
+    },
 }
 ```
 
@@ -2559,36 +2640,50 @@ app.conf.beat_schedule = {
 
 ```python
 # apps/films/tasks.py
-from celery import shared_task
+from celery import shared_task, chord, group
 from celery.utils.log import get_task_logger
-from django.core.cache import cache
+from django.core.cache import cache  # BUG FIX: thiếu import này, dùng trong refresh_trending_cache
+from django.db.models import F
+from .models import Episode, Movie
 
 logger = get_task_logger(__name__)
 
+@shared_task(bind=True)
+def process_video_file(self, raw_path: str, episode_id: int):
+    """FIX-16: Entry point cho pipeline encoding song song."""
+    Episode.objects.filter(pk=episode_id).update(processing_status='Processing')
+    
+    qualities = [480, 720, 1080]
+    # Chạy song song các task encode resolution
+    header = group(encode_quality_task.s(raw_path, episode_id, q) for q in qualities)
+    # Sau khi xong hết thì chạy task finalize
+    callback = finalize_encoding_task.s(episode_id)
+    
+    return chord(header)(callback)
 
-@shared_task(bind=True, max_retries=3, default_retry_delay=60)
-def process_video_file(self, raw_path: str, movie_id: int, episode_id: int):
-    """
-    Encode MP4 → HLS sau khi admin upload.
-    Chạy nền — không block request.
-    """
-    try:
-        from video_processor.processor import encode_to_hls
-        from apps.films.models import Episode
-        result = encode_to_hls(raw_path, episode_id)
-        Episode.objects.filter(pk=episode_id).update(
-            m3u8_path=result['m3u8_path'],
-            duration=result['duration_minutes'],
-        )
-        # Invalidate cache
-        from apps.films.models import Movie
-        movie = Movie.objects.get(pk=movie_id)
-        from apps.films.cache import invalidate_movie_cache
-        invalidate_movie_cache(movie.slug)
-        logger.info(f'Video processed: episode_id={episode_id}')
-    except Exception as exc:
-        logger.error(f'Video processing failed: {exc}')
-        raise self.retry(exc=exc)
+@shared_task
+def encode_quality_task(raw_path: str, episode_id: int, quality: int):
+    """Task encode 1 resolution cụ thể."""
+    from video_processor.processor import encode_single_quality
+    return encode_single_quality(raw_path, episode_id, quality)
+
+@shared_task
+def finalize_encoding_task(results, episode_id: int):
+    """Tổng hợp kết quả, tạo master playlist và cập nhật DB."""
+    from video_processor.processor import create_master_playlist
+    episode = Episode.objects.get(pk=episode_id)
+    
+    m3u8_path, duration = create_master_playlist(episode_id, results)
+    
+    episode.m3u8_path = m3u8_path
+    episode.duration = duration
+    episode.processing_status = 'Completed'
+    episode.save()
+    
+    # Invalidate cache
+    from apps.films.cache import invalidate_movie_cache
+    invalidate_movie_cache(episode.movie.slug)
+    return f"Episode {episode_id} processed successfully."
 
 
 @shared_task
@@ -2627,15 +2722,19 @@ def backup_database():
 
 
 # apps/users/tasks.py
-@shared_task
-def send_verification_email(user_id: int):
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_verification_email(self, user_id: int):
     from django.contrib.auth import get_user_model
     from django.core.mail import send_mail
+    from django.core.cache import cache  # BUG FIX: thiếu import này
     from django.conf import settings
     import secrets
 
     User = get_user_model()
-    user  = User.objects.get(pk=user_id)
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return  # BUG FIX: xử lý trường hợp user bị xóa trước khi task chạy
     token = secrets.token_urlsafe(32)
     cache.set(f'email_verify:{token}', user_id, timeout=3600)
     verify_url = f'{settings.SITE_URL}/api/v1/auth/verify-email/{token}/'
@@ -2687,8 +2786,27 @@ uv run celery -A config worker --loglevel=info --concurrency=4 -P gevent
 uv run celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
 # Terminal 5: Flower (Monitoring UI)
-uv run celery -A config flower --port=5555
+# FIX-13: Thêm basic auth cho Flower
+uv run celery -A config flower --port=5555 --basic_auth=admin:your_secure_password
 # Truy cập: http://localhost:5555
+
+### 11.3.1 Celery Signals — Fix DB Connection Drops (FIX-12)
+
+```python
+# config/celery.py (Bổ sung)
+from celery.signals import worker_process_init, task_prerun
+from django.db import connections
+
+@worker_process_init.connect
+def close_old_connections(**kwargs):
+    for conn in connections.all():
+        conn.close()
+
+@task_prerun.connect
+def on_task_prerun(task_id, task, *args, **kwargs):
+    for conn in connections.all():
+        conn.close()
+```
 ```
 
 ---
@@ -3046,6 +3164,16 @@ class Episode(models.Model):
     air_date       = models.DateField(null=True, blank=True)
     view_count     = models.BigIntegerField(default=0)
     is_free        = models.BooleanField(default=True)
+    
+    # FIX-16: Trạng thái xử lý video
+    processing_status = models.CharField(
+        max_length=20,
+        choices=[('Pending', 'Chờ xử lý'), ('Processing', 'Đang xử lý'), 
+                 ('Completed', 'Hoàn thành'), ('Failed', 'Lỗi')],
+        default='Pending'
+    )
+    error_message = models.TextField(blank=True)
+    
     created_at     = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -3107,6 +3235,9 @@ DB_NAME=filmsite_db
 
 # Redis
 REDIS_URL=redis://127.0.0.1:6379/0
+# BUG FIX: Broker và result backend dùng DB riêng — không dùng chung REDIS_URL
+CELERY_BROKER_URL=redis://127.0.0.1:6379/2
+CELERY_RESULT_BACKEND=redis://127.0.0.1:6379/3
 
 # Email (SMTP)
 EMAIL_HOST=smtp.gmail.com
@@ -3141,6 +3272,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY       = env('SECRET_KEY')
 DEBUG            = env('DEBUG', cast=bool, default=False)
 ALLOWED_HOSTS    = env('ALLOWED_HOSTS', cast=Csv())
+SITE_URL         = env('SITE_URL', default='http://localhost:8000')
+
+# BUG FIX: Khai báo REDIS_URL ở settings để cache.py đọc qua settings thay vì hardcode
+REDIS_URL        = env('REDIS_URL', default='redis://127.0.0.1:6379/0')
 
 INSTALLED_APPS = [
     # Django core
@@ -3197,6 +3332,7 @@ DATABASES = {
         'HOST':   env('DB_HOST', default='localhost'),
         'PORT':   env('DB_PORT', default='5432'),
         'CONN_MAX_AGE': 60,  # Persistent connections
+        'ATOMIC_REQUESTS': True,  # Đảm bảo toàn vẹn dữ liệu per request
         'OPTIONS': {
             'connect_timeout': 10,
         },
@@ -3213,38 +3349,146 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL   = '/media/'
 MEDIA_ROOT  = BASE_DIR / 'media'
 
-# Logging
+# Logging — cấu hình đầy đủ
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '[{asctime}] {levelname} {name} {process:d} {thread:d} — {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '[{asctime}] {levelname} — {message}',
             'style': '{',
         },
     },
+    'filters': {
+        'require_debug_false': {'()': 'django.utils.log.RequireDebugFalse'},
+        'require_debug_true':  {'()': 'django.utils.log.RequireDebugTrue'},
+    },
     'handlers': {
-        'file': {
-            'level': 'INFO',
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+            'filters': ['require_debug_true'],
+        },
+        'django_file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs/django.log',
-            'maxBytes': 10485760,  # 10MB
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
             'backupCount': 5,
             'formatter': 'verbose',
         },
-        'console': {
-            'class': 'logging.StreamHandler',
+        'celery_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'celery.log',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 3,
             'formatter': 'verbose',
         },
-    },
-    'root': {
-        'handlers': ['file', 'console'],
-        'level': 'INFO',
+        'mail_admins': {
+            'class': 'django.utils.log.AdminEmailHandler',
+            'filters': ['require_debug_false'],
+            'level': 'ERROR',
+        },
     },
     'loggers': {
-        'django': {'handlers': ['file'], 'level': 'WARNING', 'propagate': False},
-        'celery': {'handlers': ['file'], 'level': 'INFO',    'propagate': False},
+        'django': {
+            'handlers': ['console', 'django_file'],
+            'level': 'INFO',
+        },
+        'django.request': {
+            'handlers': ['mail_admins', 'django_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'WARNING',  # Đặt DEBUG để xem SQL queries khi cần
+            'propagate': False,
+        },
+        'celery': {
+            'handlers': ['celery_file', 'console'],
+            'level': 'INFO',
+        },
+        'apps': {
+            'handlers': ['console', 'django_file'],
+            'level': 'DEBUG',
+        },
     },
+}
+
+### 15.3 Health Check (FIX-20)
+
+```python
+# config/views.py
+from django.http import JsonResponse
+from django.db import connections
+from django.core.cache import cache
+
+def health_check(request):
+    health = {'status': 'healthy', 'checks': {}}
+    try:
+        connections['default'].cursor()
+        health['checks']['database'] = 'ok'
+    except Exception as e:
+        health['status'] = 'unhealthy'
+        health['checks']['database'] = str(e)
+    try:
+        cache.set('health_check', 'ok', 10)
+        health['checks']['cache'] = 'ok' if cache.get('health_check') == 'ok' else 'fail'
+    except Exception as e:
+        health['status'] = 'unhealthy'
+        health['checks']['cache'] = str(e)
+    return JsonResponse(health, status=200 if health['status'] == 'healthy' else 503)
+
+# config/urls.py (Bổ sung)
+path('health/', health_check, name='health-check'),
+```
+
+### 15.5 Development Settings (FIX-24)
+
+```python
+# config/settings/development.py
+from .base import *
+
+DEBUG = True
+
+INSTALLED_APPS += [
+    'debug_toolbar',
+    'silk',
+]
+
+MIDDLEWARE += [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'silk.middleware.SilkyMiddleware',
+]
+
+# Silk config
+SILKY_PYTHON_PROFILER = True
+SILKY_INTERCEPT_PERCENT = 100
+
+# Debug Toolbar
+INTERNAL_IPS = ['127.0.0.1']
+```
+
+```python
+# config/settings/test.py
+from .base import *
+
+DEBUG = False
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.MD5PasswordHasher', # Fast for tests
+]
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
 }
 ```
 
@@ -3358,7 +3602,7 @@ SESSION_COOKIE_SECURE        = True
 SESSION_COOKIE_HTTPONLY      = True
 SESSION_COOKIE_SAMESITE      = 'Lax'
 CSRF_COOKIE_SECURE           = True
-CSRF_COOKIE_HTTPONLY         = True
+CSRF_COOKIE_HTTPONLY         = False  # Phải là False để HTMX/JS đọc được CSRF token
 CSRF_COOKIE_SAMESITE         = 'Lax'
 SESSION_COOKIE_AGE           = 3600 * 24 * 7   # 7 ngày
 
@@ -3783,7 +4027,10 @@ uv run pytest --cov=. -v
 ```batch
 :: scripts/backup_db.bat — Chạy hàng ngày qua Task Scheduler
 @echo off
-SET PGPASSWORD=%DB_PASSWORD%
+:: FIX-25: KHÔNG dùng SET PGPASSWORD. 
+:: Hãy tạo file %APPDATA%\postgresql\pgpass.conf với nội dung: 
+:: localhost:5432:filmsite_db:film_user:your_password
+
 SET BACKUP_DIR=C:\Backups\filmsite
 SET DATE_STR=%date:~10,4%-%date:~4,2%-%date:~7,2%
 
@@ -4028,6 +4275,7 @@ redis-cli monitor
 ### 23.3 Base Template — `templates/base.html`
 
 ```html
+{% load static %}  {# BUG FIX: phải load static ở đầu template, trước khi dùng {% static %} bất kỳ đâu #}
 <!DOCTYPE html>
 <html lang="vi" class="dark">
 <head>
@@ -4035,12 +4283,14 @@ redis-cli monitor
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}FilmSite{% endblock %} — Xem Phim Hay</title>
   <meta name="description" content="{% block meta_desc %}FilmSite — Streaming phim lẻ, phim bộ, anime chất lượng cao.{% endblock %}">
+  <meta name="htmx-config" content='{"includeIndicatorStyles": false, "useTemplateFragments": true}'>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-  <!-- CSS: Tailwind CDN (production: dùng PostCSS build) -->
+  <!-- CSS: Tailwind -->
+  {% if debug %}
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -4061,9 +4311,11 @@ redis-cli monitor
       }
     }
   </script>
+  {% else %}
+  <link rel="stylesheet" href="{% static 'css/tailwind.min.css' %}">
+  {% endif %}
 
   <!-- Custom CSS tokens + overrides -->
-  {% load static %}
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
   <link rel="stylesheet" href="{% static 'css/components.css' %}">
 
@@ -4099,8 +4351,9 @@ redis-cli monitor
 
   <!-- ── JS Libraries ─────────────────────────────── -->
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  {# BUG FIX: Pin phiên bản Alpine.js cụ thể — 3.x.x unpinned có thể nhận breaking changes #}
+  <script src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
 
   <!-- ── App JS ─────────────────────────────────── -->
   <script src="{% static 'js/app.js' %}"></script>
@@ -4638,7 +4891,7 @@ redis-cli monitor
       <img src="{{ user.avatar.url|default:'/static/img/avatar-default.webp' }}"
            class="w-9 h-9 rounded-full flex-shrink-0 object-cover">
       <div class="flex-1">
-        <textarea name="content" rows="2" placeholder="Bình luận của bạn..."
+        <textarea name="body" rows="2" placeholder="Bình luận của bạn..."
                   class="input-field w-full resize-none"
                   required maxlength="1000"></textarea>
         <div class="flex justify-end mt-2">
@@ -5340,7 +5593,7 @@ document.addEventListener('DOMContentLoaded', () => {
 ### 23.14 Comment Partial — `templates/partials/comment.html`
 
 ```html
-<div class="comment-card" id="comment-{{ comment.id }}">
+<div class="comment-card" id="comment-{{ comment.id }}" x-data="{ replyOpen: false }">
   <div class="flex items-start gap-3">
     <img src="{{ comment.user.avatar.url|default:'/static/img/avatar-default.webp' }}"
          class="w-8 h-8 rounded-full object-cover flex-shrink-0">
@@ -5383,7 +5636,7 @@ document.addEventListener('DOMContentLoaded', () => {
               hx-on::after-request="this.reset(); replyOpen = false"
               class="flex gap-2">
           {% csrf_token %}
-          <input type="text" name="content" placeholder="Viết trả lời..."
+          <input type="text" name="body" placeholder="Viết trả lời..."
                  class="input-field flex-1 text-sm py-1.5" required maxlength="500">
           <button type="submit" class="btn-primary text-xs px-3 py-1.5">Gửi</button>
         </form>
@@ -5482,7 +5735,9 @@ from django.db.models import Prefetch
 from django.views.decorators.http import require_GET
 from django.core.cache import cache
 from apps.films.models import Movie, Episode, Genre, Country, Person
+from apps.films.tasks import increment_view_count   # BUG FIX: không import inline trong view function
 from apps.history.models import WatchHistory
+from apps.ratings.models import Rating              # BUG FIX: không import inline trong view function
 from apps.watchlist.models import WatchlistItem
 
 
@@ -5507,10 +5762,12 @@ def home(request):
         continue_watching = (
             WatchHistory.objects.filter(user=request.user, completed=False)
             .select_related('episode__movie')
-            .order_by('-updated_at')[:8]
+            .order_by('-watched_at')[:8]  # BUG FIX: watched_at (auto_now), không phải updated_at
         )
 
     # Genre sections (cache 10 min)
+    # BUG FIX: Không cache QuerySet hay Model objects trực tiếp — django-redis JSONSerializer không serialize được.
+    # Phải evaluate QuerySet thành list of dicts trước khi cache.
     genre_sections = cache.get('home_genre_sections')
     if not genre_sections:
         target_genres = Genre.objects.filter(
@@ -5519,13 +5776,31 @@ def home(request):
         GENRE_EMOJIS = {'hanh-dong': '💥', 'tinh-cam': '💕', 'kinh-di': '👻', 'hai-huoc': '😂', 'anime': '⛩'}
         genre_sections = [
             {
-                'genre': g,
-                'emoji': GENRE_EMOJIS.get(g.slug, '🎬'),
-                'movies': Movie.objects.filter(genres=g, is_hidden=False).order_by('-view_count')[:12]
+                'genre_name': g.name,
+                'genre_slug': g.slug,
+                'emoji':      GENRE_EMOJIS.get(g.slug, '🎬'),
+                'movie_ids':  list(
+                    Movie.objects.filter(genres=g, is_hidden=False)
+                                 .order_by('-view_count')
+                                 .values_list('id', flat=True)[:12]
+                ),
             }
             for g in target_genres
         ]
         cache.set('home_genre_sections', genre_sections, 600)
+
+    # Hydrate genre_sections với Movie objects (không lưu vào cache)
+    all_ids = {mid for s in genre_sections for mid in s['movie_ids']}
+    movies_map = {m.id: m for m in Movie.objects.filter(id__in=all_ids).prefetch_related('genres')}
+    genre_sections_hydrated = [
+        {
+            'genre_name': s['genre_name'],
+            'genre_slug': s['genre_slug'],
+            'emoji':      s['emoji'],
+            'movies':     [movies_map[i] for i in s['movie_ids'] if i in movies_map],
+        }
+        for s in genre_sections
+    ]
 
     new_releases = Movie.objects.filter(is_hidden=False).order_by('-created_at')[:12]
 
@@ -5533,7 +5808,7 @@ def home(request):
         'featured_movie':    featured,
         'trending':          trending,
         'continue_watching': continue_watching,
-        'genre_sections':    genre_sections,
+        'genre_sections':    genre_sections_hydrated,  # BUG FIX: dùng hydrated version (chứa Movie objects)
         'new_releases':      new_releases,
     })
 
@@ -5565,7 +5840,6 @@ def movie_detail(request, slug):
         ).first()
         watch_progress = hist.progress_seconds if hist else 0
         in_watchlist   = WatchlistItem.objects.filter(user=request.user, movie=movie).exists()
-        from apps.ratings.models import Rating
         r = Rating.objects.filter(user=request.user, movie=movie).first()
         user_rating = r.score if r else None
 
@@ -5578,8 +5852,7 @@ def movie_detail(request, slug):
     ).exclude(pk=movie.pk).distinct().order_by('-imdb_rating')[:10]
 
     # Increment view count (async via Celery)
-    from apps.films.tasks import increment_view_count
-    increment_view_count.delay(movie.pk)
+    increment_view_count.delay(movie.pk)  # BUG FIX: import đã chuyển lên top-level
 
     return render(request, 'films/detail.html', {
         'movie':           movie,
@@ -5616,7 +5889,7 @@ def search_view(request):
     genre = request.GET.get('genre')
     if genre:    movies = movies.filter(genres__slug=genre)
     country = request.GET.get('country')
-    if country:  movies = movies.filter(countries__country_code=country)
+    if country:  movies = movies.filter(countries__code=country)  # BUG FIX: field là 'code' không phải 'country_code'
     year = request.GET.get('year')
     if year:     movies = movies.filter(release_year=year)
 
@@ -5708,8 +5981,29 @@ urlpatterns = [
 <!-- body tag với hx-boost cho SPA-like navigation -->
 <body hx-boost="true" hx-indicator="#page-loader" ...>
   <div id="page-loader" class="htmx-indicator fixed top-0 left-0 right-0 h-0.5 bg-primary z-50"></div>
+</body>
+```
+
+### 23.21 Template Tag: query_transform (FIX-22)
+
+```python
+# apps/films/templatetags/query_helpers.py
+from django import template
+
+register = template.Library()
+
+@template.simple_tag(takes_context=True)
+def query_transform(context, **kwargs):
+    """
+    Giữ nguyên các query params hiện tại và ghi đè/thêm params mới.
+    Dùng cho pagination: {% query_transform page=num %}
+    """
+    query = context['request'].GET.copy()
+    for k, v in kwargs.items():
+        query[k] = v
+    return query.urlencode()
 ```
 
 ---
 
-*FilmSite Architecture Plan v2.0 — UI Frontend section added*
+*FilmSite Architecture Plan v2.0 — Hoàn chỉnh & đã review*
